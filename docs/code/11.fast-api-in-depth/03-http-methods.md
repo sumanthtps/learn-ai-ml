@@ -12,6 +12,12 @@ tags: [http, get, post, put, delete, crud, fastapi, beginner]
 
 ---
 
+## Visual Reference
+
+![HTTP request and response example](https://commons.wikimedia.org/wiki/Special:Redirect/file/Http_request_telnet_ubuntu.png)
+
+Source: [Wikimedia Commons - Http request telnet ubuntu](https://commons.wikimedia.org/wiki/File:Http_request_telnet_ubuntu.png)
+
 ## The Project We Build Together
 
 From this video onward, everything is practical. We build a **Patient Management API** — a backend for a clinic that stores patient records.

@@ -12,6 +12,12 @@ tags: [pydantic, validation, schemas, types, basemodel, beginner]
 
 ---
 
+## Visual Reference
+
+![Pydantic code example screenshot](https://commons.wikimedia.org/wiki/Special:Redirect/file/Screenshot_from_2025-01-28_15-28-42.png)
+
+Source: [Wikimedia Commons - Python code using the pydantic library](https://commons.wikimedia.org/wiki/File:Screenshot_from_2025-01-28_15-28-42.png)
+
 ## The Problem Pydantic Solves
 
 Python is dynamically typed. This is great for notebooks. In production ML APIs, it's dangerous:

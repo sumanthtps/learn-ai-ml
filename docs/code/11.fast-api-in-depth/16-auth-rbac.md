@@ -12,6 +12,12 @@ tags: [auth, jwt, oauth2, rbac, security, permissions, intermediate]
 
 ---
 
+## Visual Reference
+
+![Role-based access control diagram](https://commons.wikimedia.org/wiki/Special:Redirect/file/Role-based_access_control.svg)
+
+Source: [Wikimedia Commons - Role-based access control](https://commons.wikimedia.org/wiki/File:Role-based_access_control.svg)
+
 ## Authentication vs Authorization — Understanding the Difference
 
 These two words are often confused. They mean very different things:

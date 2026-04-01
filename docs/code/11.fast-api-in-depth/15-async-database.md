@@ -12,6 +12,12 @@ tags: [postgresql, sqlalchemy, alembic, async, database, orm, migrations, interm
 
 ---
 
+## Visual Reference
+
+![PostgreSQL elephant logo](https://commons.wikimedia.org/wiki/Special:Redirect/file/Postgresql_elephant.svg)
+
+Source: [Wikimedia Commons - Postgresql elephant](https://commons.wikimedia.org/wiki/File:Postgresql_elephant.svg)
+
 ## Why We Need a Real Database
 
 Throughout the CampusX series, we stored data in a JSON file. This was intentional — it let us focus on learning FastAPI without database complexity. But in production, a JSON file fails in three critical ways:

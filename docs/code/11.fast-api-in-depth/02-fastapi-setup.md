@@ -12,6 +12,12 @@ tags: [fastapi, uvicorn, asgi, wsgi, async, setup, beginner]
 
 ---
 
+## Visual Reference
+
+![FastAPI logo](https://commons.wikimedia.org/wiki/Special:Redirect/file/FastAPI_logo.svg)
+
+Source: [Wikimedia Commons - FastAPI logo](https://commons.wikimedia.org/wiki/File:FastAPI_logo.svg)
+
 ## Why FastAPI and Not Flask?
 
 Before installing anything, understand *why* FastAPI exists. When ML engineers started building APIs, they mostly used Flask — the dominant Python web framework since 2010. Flask works. But it has real problems for modern ML workloads.

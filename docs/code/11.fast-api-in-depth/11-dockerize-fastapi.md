@@ -12,6 +12,12 @@ tags: [docker, dockerfile, docker-compose, containerization, fastapi, mlops, beg
 
 ---
 
+## Visual Reference
+
+![Docker logo](<https://commons.wikimedia.org/wiki/Special:Redirect/file/Docker_(container_engine)_logo.svg>)
+
+Source: [Wikimedia Commons - Docker (container engine) logo](https://commons.wikimedia.org/wiki/File:Docker_(container_engine)_logo.svg)
+
 ## What "Dockerizing" Means in Practice
 
 In Video 10, you learned what Docker is. Now you apply it: write a `Dockerfile` for your FastAPI app, build it into an image, test it locally, and push it to a registry so it can be deployed anywhere.

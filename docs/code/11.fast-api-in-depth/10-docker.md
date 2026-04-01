@@ -12,6 +12,12 @@ tags: [docker, containers, dockerfile, images, devops, mlops, beginner]
 
 ---
 
+## Visual Reference
+
+![Docker logo](<https://commons.wikimedia.org/wiki/Special:Redirect/file/Docker_(container_engine)_logo.svg>)
+
+Source: [Wikimedia Commons - Docker (container engine) logo](https://commons.wikimedia.org/wiki/File:Docker_(container_engine)_logo.svg)
+
 ## The "Works on My Machine" Problem
 
 You build a FastAPI prediction API. It runs beautifully on your MacBook with Python 3.11, scikit-learn 1.5.1, and pandas 2.2.2.

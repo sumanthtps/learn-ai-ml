@@ -12,6 +12,12 @@ tags: [websockets, sse, streaming, real-time, llm, intermediate]
 
 ---
 
+## Visual Reference
+
+![WebSocket connection diagram](https://commons.wikimedia.org/wiki/Special:Redirect/file/Websocket_connection.png)
+
+Source: [Wikimedia Commons - Websocket connection](https://commons.wikimedia.org/wiki/File:Websocket_connection.png)
+
 ## Why Streaming for ML?
 
 Standard HTTP is **request-response**: client sends one request, server sends one response. This works for most APIs, but ML creates scenarios where you need data to flow continuously:

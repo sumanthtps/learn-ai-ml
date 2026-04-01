@@ -12,6 +12,12 @@ tags: [logging, middleware, config, health, production, fastapi, intermediate]
 
 ---
 
+## Visual Reference
+
+![OpenAPI specification logo](https://commons.wikimedia.org/wiki/Special:Redirect/file/OpenAPI_Specification_Logo_Pantone.svg)
+
+Source: [Wikimedia Commons - OpenAPI Specification Logo](https://commons.wikimedia.org/wiki/File:OpenAPI_Specification_Logo_Pantone.svg)
+
 ## The Gap Between Development and Production
 
 The prediction API from Video 8 works perfectly on your laptop. "Working on my laptop" is not the same as "production-ready." When this API runs in the cloud handling real traffic, you need answers to questions like:

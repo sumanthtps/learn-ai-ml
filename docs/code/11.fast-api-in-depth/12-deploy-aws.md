@@ -12,6 +12,12 @@ tags: [aws, ec2, ecr, ecs, deployment, cloud, mlops, beginner]
 
 ---
 
+## Visual Reference
+
+![Amazon Web Services logo](https://commons.wikimedia.org/wiki/Special:Redirect/file/Amazon_Web_Services_Logo.svg)
+
+Source: [Wikimedia Commons - Amazon Web Services Logo](https://commons.wikimedia.org/wiki/File:Amazon_Web_Services_Logo.svg)
+
 ## From Laptop to the Cloud
 
 Your Docker container runs perfectly locally. Now you want it running on a server in the cloud — publicly accessible 24/7, from anywhere in the world.

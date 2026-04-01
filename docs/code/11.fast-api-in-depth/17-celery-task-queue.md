@@ -12,6 +12,12 @@ tags: [celery, redis, background-jobs, training, async, mlops, intermediate]
 
 ---
 
+## Visual Reference
+
+![Celery logo](https://commons.wikimedia.org/wiki/Special:Redirect/file/Celery_logo.png)
+
+Source: [Wikimedia Commons - Celery logo](https://commons.wikimedia.org/wiki/File:Celery_logo.png)
+
 ## The Problem: HTTP Requests Can't Wait Forever
 
 HTTP has a fundamental constraint: clients expect a response in seconds (typically under 30). But ML operations can take minutes or hours:

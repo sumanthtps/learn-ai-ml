@@ -12,6 +12,12 @@ tags: [production, testing, auth, async, rate-limiting, security, best-practices
 
 ---
 
+## Visual Reference
+
+![Nginx logo](https://commons.wikimedia.org/wiki/Special:Redirect/file/Nginx_logo.svg)
+
+Source: [Wikimedia Commons - Nginx logo](https://commons.wikimedia.org/wiki/File:Nginx_logo.svg)
+
 ## The Gap Between "It Works" and "Production-Ready"
 
 A tutorial API and a production API might look the same from the outside. The differences are entirely internal:

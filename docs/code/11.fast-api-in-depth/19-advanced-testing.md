@@ -12,6 +12,12 @@ tags: [testing, pytest, mocking, integration, load-testing, ci, intermediate]
 
 ---
 
+## Visual Reference
+
+![Pytest logo](https://commons.wikimedia.org/wiki/Special:Redirect/file/Pytest_logo.svg)
+
+Source: [Wikimedia Commons - Pytest logo](https://commons.wikimedia.org/wiki/File:Pytest_logo.svg)
+
 ## The Testing Philosophy for ML APIs
 
 Tests for an ML API have a unique challenge: the ML model itself is non-deterministic and slow. The solution is **test isolation**: replace the real model with a predictable mock so tests run in milliseconds and produce the same result every time.

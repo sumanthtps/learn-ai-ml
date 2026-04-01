@@ -12,6 +12,12 @@ tags: [api, fundamentals, rest, http, ml-deployment, beginner]
 
 ---
 
+## Visual Reference
+
+![Client-server model](https://commons.wikimedia.org/wiki/Special:Redirect/file/Client-server_model.svg)
+
+Source: [Wikimedia Commons - Client-server model](https://commons.wikimedia.org/wiki/File:Client-server_model.svg)
+
 ## Start Here: The Problem Every ML Engineer Faces
 
 You have just trained a machine learning model. It predicts loan defaults with 91% accuracy. It runs beautifully in your Jupyter notebook. You are proud of it.

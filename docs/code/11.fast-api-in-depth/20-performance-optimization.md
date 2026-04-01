@@ -12,6 +12,12 @@ tags: [performance, caching, redis, profiling, async, optimization, advanced]
 
 ---
 
+## Visual Reference
+
+![Memory hierarchy diagram](https://commons.wikimedia.org/wiki/Special:Redirect/file/Mem_hierarchy.svg)
+
+Source: [Wikimedia Commons - Mem hierarchy](https://commons.wikimedia.org/wiki/File:Mem_hierarchy.svg)
+
 ## Performance Thinking: Measure Before You Optimize
 
 A common mistake: spending a week optimizing the wrong thing. Always **profile first**, optimize second.

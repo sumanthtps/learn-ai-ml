@@ -12,6 +12,12 @@ tags: [ml, scikit-learn, joblib, prediction, inference, fastapi, beginner]
 
 ---
 
+## Visual Reference
+
+![Scikit-learn logo](https://commons.wikimedia.org/wiki/Special:Redirect/file/Scikit_learn_logo_small.svg)
+
+Source: [Wikimedia Commons - Scikit learn logo small](https://commons.wikimedia.org/wiki/File:Scikit_learn_logo_small.svg)
+
 ## The Core Goal of This Video
 
 Every concept we've learned — FastAPI, Pydantic, HTTP methods, schemas — all exists for one purpose: **taking a trained ML model and making it callable by anyone over HTTP**.

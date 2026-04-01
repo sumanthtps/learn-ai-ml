@@ -1,12 +1,12 @@
 ---
-id: project-fraud-detection
-title: "Project 1 · Real-Time Fraud Detection API"
-sidebar_label: "🔴 Project 1 · Fraud Detection"
-sidebar_position: 21
+id: project-fraud-detection-solution
+title: "Project 1 Solution · Real-Time Fraud Detection API"
+sidebar_label: "🔴 P1 · Fraud Solution"
+sidebar_position: 25
 tags: [project, fraud, real-time, redis, background-tasks, monitoring, advanced]
 ---
 
-# Project 1 · Real-Time Fraud Detection API
+# Project 1 Solution · Real-Time Fraud Detection API
 
 > **Industry-Grade Project** — Build a complete fraud detection system from scratch using every concept in this series.
 

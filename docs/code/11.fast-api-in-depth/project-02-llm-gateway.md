@@ -1,12 +1,12 @@
 ---
-id: project-llm-gateway
-title: "Project 2 · Multi-Provider LLM API Gateway"
-sidebar_label: "🟡 Project 2 · LLM Gateway"
-sidebar_position: 22
+id: project-llm-gateway-solution
+title: "Project 2 Solution · Multi-Provider LLM API Gateway"
+sidebar_label: "🟡 P2 · LLM Solution"
+sidebar_position: 27
 tags: [project, llm, openai, streaming, gateway, rate-limiting, cost-tracking, advanced]
 ---
 
-# Project 2 · Multi-Provider LLM API Gateway
+# Project 2 Solution · Multi-Provider LLM API Gateway
 
 > **Industry-Grade Project** — Build a unified LLM API that routes to multiple providers, streams tokens, tracks costs, and rate-limits by user.
 

@@ -1,12 +1,12 @@
 ---
-id: project-mlops-pipeline
-title: "Project 3 · MLOps Pipeline Management API"
-sidebar_label: "🟢 Project 3 · MLOps Pipeline"
-sidebar_position: 23
+id: project-mlops-pipeline-solution
+title: "Project 3 Solution · MLOps Pipeline Management API"
+sidebar_label: "🟢 P3 · MLOps Solution"
+sidebar_position: 29
 tags: [project, mlops, pipeline, model-registry, ab-testing, canary, monitoring, advanced]
 ---
 
-# Project 3 · MLOps Pipeline Management API
+# Project 3 Solution · MLOps Pipeline Management API
 
 > **Industry-Grade Project** — The complete ML platform backend: experiment tracking, model registry, A/B testing, canary deployments, and drift detection.
 

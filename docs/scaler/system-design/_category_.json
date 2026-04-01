@@ -1,0 +1,8 @@
+{
+  "label": "System Design Topics",
+  "position": 40,
+  "link": {
+    "type": "generated-index",
+    "description": "Topic-wise system design notes with tradeoffs and examples."
+  }
+}

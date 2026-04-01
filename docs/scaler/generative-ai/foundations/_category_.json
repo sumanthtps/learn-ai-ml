@@ -1,0 +1,8 @@
+{
+  "label": "Foundations and LLM Internals",
+  "position": 10,
+  "link": {
+    "type": "generated-index",
+    "description": "Core concepts from GenAI basics through tokenization, transformers, training, and inference."
+  }
+}

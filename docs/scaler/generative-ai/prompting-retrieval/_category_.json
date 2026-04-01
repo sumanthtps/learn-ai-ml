@@ -1,0 +1,8 @@
+{
+  "label": "Prompting, Retrieval, and Knowledge Systems",
+  "position": 20,
+  "link": {
+    "type": "generated-index",
+    "description": "Application-building topics covering prompting, embeddings, vector search, and RAG."
+  }
+}

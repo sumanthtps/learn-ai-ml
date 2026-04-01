@@ -12,11 +12,19 @@ tags: [production, testing, auth, async, rate-limiting, security, best-practices
 
 ---
 
-## Visual Reference
+## Production Request Flow
 
-![Nginx logo](https://commons.wikimedia.org/wiki/Special:Redirect/file/Nginx_logo.svg)
-
-Source: [Wikimedia Commons - Nginx logo](https://commons.wikimedia.org/wiki/File:Nginx_logo.svg)
+```mermaid
+flowchart LR
+  Client --> Auth[Auth Check]
+  Auth --> RateLimit[Rate Limit]
+  RateLimit --> Validation[Validation]
+  Validation --> Service[Service Logic]
+  Service --> Cache[Cache or DB]
+  Service --> Logs[Logs]
+  Service --> Metrics[Metrics]
+  Service --> Response[Response]
+```
 
 ## The Gap Between "It Works" and "Production-Ready"
 

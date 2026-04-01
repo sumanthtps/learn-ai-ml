@@ -12,11 +12,17 @@ tags: [ml, scikit-learn, joblib, prediction, inference, fastapi, beginner]
 
 ---
 
-## Visual Reference
+## Model Serving Flow
 
-![Scikit-learn logo](https://commons.wikimedia.org/wiki/Special:Redirect/file/Scikit_learn_logo_small.svg)
-
-Source: [Wikimedia Commons - Scikit learn logo small](https://commons.wikimedia.org/wiki/File:Scikit_learn_logo_small.svg)
+```mermaid
+flowchart LR
+  Client[Prediction Request] --> API[FastAPI Endpoint]
+  API --> Validate[Pydantic Validation]
+  Validate --> Preprocess[Feature Preprocessing]
+  Preprocess --> Model[Loaded ML Model]
+  Model --> Postprocess[Prediction Formatting]
+  Postprocess --> Response[JSON Prediction Response]
+```
 
 ## The Core Goal of This Video
 

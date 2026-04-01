@@ -12,15 +12,15 @@ tags: [monitoring, prometheus, grafana, metrics, observability, fastapi, product
 
 ---
 
-## Visual References
+## Monitoring Flow
 
-![Prometheus logo](https://commons.wikimedia.org/wiki/Special:Redirect/file/Prometheus_software_logo.svg)
-
-Source: [Wikimedia Commons - Prometheus software logo](https://commons.wikimedia.org/wiki/File:Prometheus_software_logo.svg)
-
-![Grafana logo](https://commons.wikimedia.org/wiki/Special:Redirect/file/Grafana_logo.svg)
-
-Source: [Wikimedia Commons - Grafana logo](https://commons.wikimedia.org/wiki/File:Grafana_logo.svg)
+```mermaid
+flowchart LR
+  FastAPI --> Metrics[/metrics endpoint/]
+  Metrics --> Prometheus[Prometheus Scraper]
+  Prometheus --> Grafana[Grafana Dashboard]
+  Prometheus --> Alerts[Alert Rules]
+```
 
 ## Why Monitoring Is Non-Negotiable
 

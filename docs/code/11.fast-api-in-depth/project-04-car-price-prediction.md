@@ -12,11 +12,20 @@ tags: [project, car-price, fastapi, auth, redis, docker, render, prometheus, adv
 
 ---
 
-## Visual Reference
+## Capstone System Flow
 
-![Render logo](https://commons.wikimedia.org/wiki/Special:Redirect/file/Render_logo.svg)
-
-Source: [Wikimedia Commons - Render logo](https://commons.wikimedia.org/wiki/File:Render_logo.svg)
+```mermaid
+flowchart LR
+  Client --> Auth[Auth Layer]
+  Auth --> API[FastAPI Predict Endpoint]
+  API --> Validate[Pydantic Validation]
+  Validate --> Cache{Redis Cache?}
+  Cache -->|Hit| Response[Prediction Response]
+  Cache -->|Miss| Model[Car Price Model]
+  Model --> Logs[Structured Logs]
+  Logs --> Metrics[Metrics]
+  Metrics --> Response
+```
 
 ## Why This Project Exists
 

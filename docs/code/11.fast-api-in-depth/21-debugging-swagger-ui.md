@@ -12,11 +12,16 @@ tags: [debugging, swagger, openapi, fastapi, testclient, troubleshooting, interm
 
 ---
 
-## Visual Reference
+## Debugging Layers
 
-![OpenAPI specification logo](https://commons.wikimedia.org/wiki/Special:Redirect/file/OpenAPI_Specification_Logo_Pantone.svg)
-
-Source: [Wikimedia Commons - OpenAPI Specification Logo](https://commons.wikimedia.org/wiki/File:OpenAPI_Specification_Logo_Pantone.svg)
+```mermaid
+flowchart LR
+  Client[Client / Swagger / curl] --> Validation[Validation Layer]
+  Validation --> Dependencies[Dependencies]
+  Dependencies --> Route[Route Logic]
+  Route --> ResponseModel[Response Serialization]
+  ResponseModel --> Output[Final Output]
+```
 
 ## Why This Topic Deserves Its Own Page
 

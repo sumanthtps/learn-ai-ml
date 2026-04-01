@@ -12,11 +12,17 @@ tags: [docker, dockerfile, docker-compose, containerization, fastapi, mlops, beg
 
 ---
 
-## Visual Reference
+## Dockerization Flow
 
-![Docker logo](<https://commons.wikimedia.org/wiki/Special:Redirect/file/Docker_(container_engine)_logo.svg>)
-
-Source: [Wikimedia Commons - Docker (container engine) logo](https://commons.wikimedia.org/wiki/File:Docker_(container_engine)_logo.svg)
+```mermaid
+flowchart LR
+  Code[Application Code] --> Dockerfile[Dockerfile]
+  Requirements[requirements.txt] --> Dockerfile
+  Dockerfile --> Build[Build Image]
+  Build --> Test[Run Container Locally]
+  Test --> Registry[Push to Registry]
+  Registry --> Deploy[Deploy Anywhere]
+```
 
 ## What "Dockerizing" Means in Practice
 

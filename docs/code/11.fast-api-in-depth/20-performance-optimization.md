@@ -12,11 +12,18 @@ tags: [performance, caching, redis, profiling, async, optimization, advanced]
 
 ---
 
-## Visual Reference
+## Performance Bottleneck Flow
 
-![Memory hierarchy diagram](https://commons.wikimedia.org/wiki/Special:Redirect/file/Mem_hierarchy.svg)
-
-Source: [Wikimedia Commons - Mem hierarchy](https://commons.wikimedia.org/wiki/File:Mem_hierarchy.svg)
+```mermaid
+flowchart LR
+  Client --> API[FastAPI Endpoint]
+  API --> Validate[Validation]
+  Validate --> Cache{Cache Hit?}
+  Cache -->|Yes| Response[Fast Response]
+  Cache -->|No| Model[Model Inference]
+  Model --> DB[Optional DB / Logging]
+  DB --> Response
+```
 
 ## Performance Thinking: Measure Before You Optimize
 

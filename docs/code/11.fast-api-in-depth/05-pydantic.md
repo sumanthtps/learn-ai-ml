@@ -12,11 +12,16 @@ tags: [pydantic, validation, schemas, types, basemodel, beginner]
 
 ---
 
-## Visual Reference
+## Validation Flow
 
-![Pydantic code example screenshot](https://commons.wikimedia.org/wiki/Special:Redirect/file/Screenshot_from_2025-01-28_15-28-42.png)
-
-Source: [Wikimedia Commons - Python code using the pydantic library](https://commons.wikimedia.org/wiki/File:Screenshot_from_2025-01-28_15-28-42.png)
+```mermaid
+flowchart LR
+  Client[Incoming JSON] --> FastAPI[FastAPI]
+  FastAPI --> Pydantic[Pydantic Schema]
+  Pydantic -->|Valid| Route[Business Logic]
+  Pydantic -->|Invalid| Error422[422 Validation Error]
+  Route --> Response[Structured Response]
+```
 
 ## The Problem Pydantic Solves
 

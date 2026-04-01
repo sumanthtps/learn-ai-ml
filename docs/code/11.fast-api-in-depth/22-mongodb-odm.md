@@ -12,11 +12,16 @@ tags: [mongodb, odm, beanie, motor, nosql, fastapi, database, intermediate]
 
 ---
 
-## Visual Reference
+## ODM Flow
 
-![MongoDB logo](https://commons.wikimedia.org/wiki/Special:Redirect/file/MongoDB_Logo.svg)
-
-Source: [Wikimedia Commons - MongoDB Logo](https://commons.wikimedia.org/wiki/File:MongoDB_Logo.svg)
+```mermaid
+flowchart LR
+  Request --> FastAPI[FastAPI Endpoint]
+  FastAPI --> Beanie[Beanie ODM]
+  Beanie --> Mongo[(MongoDB Collection)]
+  Mongo --> Beanie
+  Beanie --> Response
+```
 
 ## Why This Topic Exists
 

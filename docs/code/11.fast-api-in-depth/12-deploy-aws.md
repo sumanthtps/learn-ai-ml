@@ -12,11 +12,16 @@ tags: [aws, ec2, ecr, ecs, deployment, cloud, mlops, beginner]
 
 ---
 
-## Visual Reference
+## Deployment Architecture
 
-![Amazon Web Services logo](https://commons.wikimedia.org/wiki/Special:Redirect/file/Amazon_Web_Services_Logo.svg)
-
-Source: [Wikimedia Commons - Amazon Web Services Logo](https://commons.wikimedia.org/wiki/File:Amazon_Web_Services_Logo.svg)
+```mermaid
+flowchart LR
+  User[Internet User] --> DNS[Public IP or Domain]
+  DNS --> Nginx[Nginx Reverse Proxy]
+  Nginx --> Container[Docker Container]
+  Container --> Uvicorn[Uvicorn]
+  Uvicorn --> FastAPI[FastAPI App]
+```
 
 ## From Laptop to the Cloud
 

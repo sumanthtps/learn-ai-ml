@@ -12,11 +12,18 @@ tags: [logging, middleware, config, health, production, fastapi, intermediate]
 
 ---
 
-## Visual Reference
+## Request Lifecycle in Production
 
-![OpenAPI specification logo](https://commons.wikimedia.org/wiki/Special:Redirect/file/OpenAPI_Specification_Logo_Pantone.svg)
-
-Source: [Wikimedia Commons - OpenAPI Specification Logo](https://commons.wikimedia.org/wiki/File:OpenAPI_Specification_Logo_Pantone.svg)
+```mermaid
+flowchart LR
+  Client --> Middleware[Logging and Middleware]
+  Middleware --> Config[Settings and Config]
+  Config --> Validation[Input Validation]
+  Validation --> Route[Route Logic]
+  Route --> ErrorHandlers[Error Handling]
+  ErrorHandlers --> Logs[Structured Logs]
+  ErrorHandlers --> Response[Safe API Response]
+```
 
 ## The Gap Between Development and Production
 

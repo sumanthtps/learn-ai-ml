@@ -12,11 +12,16 @@ tags: [docker, containers, dockerfile, images, devops, mlops, beginner]
 
 ---
 
-## Visual Reference
+## Container Flow
 
-![Docker logo](<https://commons.wikimedia.org/wiki/Special:Redirect/file/Docker_(container_engine)_logo.svg>)
-
-Source: [Wikimedia Commons - Docker (container engine) logo](https://commons.wikimedia.org/wiki/File:Docker_(container_engine)_logo.svg)
+```mermaid
+flowchart LR
+  Dockerfile[Dockerfile] --> Build[docker build]
+  Build --> Image[Docker Image]
+  Image --> Run[docker run]
+  Run --> Container[Running Container]
+  Container --> API[FastAPI App]
+```
 
 ## The "Works on My Machine" Problem
 

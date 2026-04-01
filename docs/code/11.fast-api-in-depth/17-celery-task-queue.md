@@ -12,11 +12,17 @@ tags: [celery, redis, background-jobs, training, async, mlops, intermediate]
 
 ---
 
-## Visual Reference
+## Background Job Flow
 
-![Celery logo](https://commons.wikimedia.org/wiki/Special:Redirect/file/Celery_logo.png)
-
-Source: [Wikimedia Commons - Celery logo](https://commons.wikimedia.org/wiki/File:Celery_logo.png)
+```mermaid
+flowchart LR
+  Client --> API[FastAPI API]
+  API --> Queue[Task Queue / Broker]
+  Queue --> Worker[Celery Worker]
+  Worker --> Model[Training or Batch Inference]
+  Worker --> Store[DB / Redis / Artifacts]
+  Store --> Status[Job Status API]
+```
 
 ## The Problem: HTTP Requests Can't Wait Forever
 

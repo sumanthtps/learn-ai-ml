@@ -12,11 +12,15 @@ tags: [testing, pytest, mocking, integration, load-testing, ci, intermediate]
 
 ---
 
-## Visual Reference
+## Testing Flow
 
-![Pytest logo](https://commons.wikimedia.org/wiki/Special:Redirect/file/Pytest_logo.svg)
-
-Source: [Wikimedia Commons - Pytest logo](https://commons.wikimedia.org/wiki/File:Pytest_logo.svg)
+```mermaid
+flowchart LR
+  TestCase[Test Case] --> TestClient[FastAPI TestClient]
+  TestClient --> App[FastAPI App]
+  App --> Mocks[Mocked Model / DB / External APIs]
+  App --> Assertions[Assertions on Response]
+```
 
 ## The Testing Philosophy for ML APIs
 

@@ -12,11 +12,16 @@ tags: [fastapi, uvicorn, asgi, wsgi, async, setup, beginner]
 
 ---
 
-## Visual Reference
+## Concept Flow
 
-![FastAPI logo](https://commons.wikimedia.org/wiki/Special:Redirect/file/FastAPI_logo.svg)
-
-Source: [Wikimedia Commons - FastAPI logo](https://commons.wikimedia.org/wiki/File:FastAPI_logo.svg)
+```mermaid
+flowchart LR
+  Client[Client Request] --> Uvicorn[Uvicorn ASGI Server]
+  Uvicorn --> FastAPI[FastAPI App]
+  FastAPI --> Pydantic[Pydantic Validation]
+  Pydantic --> Endpoint[Route Function]
+  Endpoint --> Response[JSON Response]
+```
 
 ## Why FastAPI and Not Flask?
 

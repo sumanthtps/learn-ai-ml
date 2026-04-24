@@ -36,7 +36,7 @@ const config: Config = {
         docs: {
           sidebarPath: "./sidebars.ts",
           remarkPlugins: [math],
-          rehypePlugins: [katex],
+          rehypePlugins: [[katex, { output: "html" }]],
         },
         theme: {
           customCss: "./src/css/custom.css",
@@ -63,7 +63,7 @@ const config: Config = {
       href: "https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css",
       type: "text/css",
       integrity:
-        "sha384-nW7hDJ4SmCyFRIE7NRH8fXf2l+dNwM4hxKyn9YOeAWMq8TDzv2h7Q+n9AiUMav+s",
+        "sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV",
       crossorigin: "anonymous",
     },
   ],

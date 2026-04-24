@@ -10,7 +10,21 @@ tags: [xor, perceptron, linear-separability, mlp, ann]
 
 # Why a single perceptron fails on nonlinear problems
 
-This note is the turning point of the ANN story. It explains exactly why one perceptron is not enough.
+This note is the turning point of the ANN story. It explains exactly why one perceptron is not enough — and motivates the solution: multi-layer networks.
+
+**Setup**: You now know the perceptron ([Note 4](perceptron-basics-neuron-analogy-and-geometric-intuition.md)) and how to train it ([Note 5](perceptron-training-and-the-perceptron-trick.md)). But there's a fatal flaw.
+
+## Continuity guide
+
+**From**: [Note 6 — Perceptron Losses](perceptron-losses-sigmoid-hinge-loss-and-binary-cross-entropy.md) (smooth losses for training)
+
+**In this note**: The **XOR problem** — a problem no single perceptron can solve, no matter the weights
+
+**Next**: [Note 8 — MLP Notation](mlp-notation-inputs-weights-biases-layers-and-shapes.md) (how to write multi-layer networks formally)
+
+**Then**: [Note 9 — MLP Intuition](multi-layer-perceptron-intuition.md) (**how hidden layers solve XOR**)
+
+**Critical insight**: This note is why deep learning exists. Without this limitation, we wouldn't need hidden layers at all!
 
 ## The key limitation
 

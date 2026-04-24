@@ -10,19 +10,19 @@ tags: [forward-propagation, mlp, activations, logits, prediction]
 
 # Forward propagation and how a neural network predicts
 
-Now that the structure of an MLP is clear ([Note 9](multi-layer-perceptron-intuition.md)), we can study the actual computation performed during prediction.
+Now that the structure of an MLP is clear ([Note 9](09-multi-layer-perceptron-intuition.md)), we can study the actual computation performed during prediction.
 
 **Before this note**: You know *why* hidden layers exist. Now you'll see *how* they work in practice — the step-by-step execution of an MLP.
 
 ## Continuity guide
 
-**From**: [Note 9 — MLP Intuition](multi-layer-perceptron-intuition.md) (why hidden layers work conceptually)
+**From**: [Note 9 — MLP Intuition](09-multi-layer-perceptron-intuition.md) (why hidden layers work conceptually)
 
 **In this note**: **Forward propagation** — the actual computation: input → hidden layer 1 → hidden layer 2 → ... → output
 
-**Next**: [Projects (Notes 11-13)](handwritten-digit-classification-with-an-ann-in-pytorch.md) apply this to real data
+**Next**: [Projects (Notes 11-13)](12-handwritten-digit-classification-with-an-ann-in-pytorch.md) apply this to real data
 
-**Then**: [Note 14 — Loss Functions](loss-functions-in-deep-learning.md) (compare predictions to truth) → [Note 15 — Backpropagation](backpropagation-part-1-what-backpropagation-is.md) (how to learn from errors)
+**Then**: [Note 14 — Loss Functions](14-loss-functions-in-deep-learning.md) (compare predictions to truth) → [Note 15 — Backpropagation](15-backpropagation-part-1-what-backpropagation-is.md) (how to learn from errors)
 
 **Key**: You must understand forward propagation before backpropagation. Backprop reverses the forward pass.
 

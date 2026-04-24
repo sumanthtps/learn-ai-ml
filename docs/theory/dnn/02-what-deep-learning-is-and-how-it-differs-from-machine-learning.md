@@ -128,7 +128,7 @@ This composition of linear transformations and nonlinear activations is flexible
 
 ### When classical ML is still better
 
-- **Small datasets** (<1000 samples): Deep networks overfit; tree-based models generalize better
+- **Small datasets** (&lt;1000 samples): Deep networks overfit; tree-based models generalize better
 - **Tabular data with strong domain features**: If each column is already a meaningful feature (e.g., age, income, credit score), classical ML is simpler and faster
 - **Interpretability required**: If you need to explain why a prediction was made, tree-based models are more interpretable
 - **Limited compute**: Training a deep network on a laptop is painful; classical ML is fast
@@ -297,7 +297,7 @@ Because it trains millions of parameters through many forward and backward passe
 <details>
 <summary>When should you use classical ML instead of deep learning?</summary>
 
-When: (1) The dataset is small (<1000 samples), (2) your features are already informative (structured tabular data), (3) interpretability is critical, (4) compute is limited, or (5) you don't have time for hyperparameter tuning.
+When: (1) The dataset is small (&lt;1000 samples), (2) your features are already informative (structured tabular data), (3) interpretability is critical, (4) compute is limited, or (5) you don't have time for hyperparameter tuning.
 </details>
 
 <details>

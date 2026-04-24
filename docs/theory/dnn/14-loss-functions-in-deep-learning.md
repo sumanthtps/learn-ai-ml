@@ -10,17 +10,17 @@ tags: [loss-functions, mse, cross-entropy, bce, nll, huber, deep-learning, optim
 
 # Loss functions in deep learning
 
-The three projects ([Notes 11-13](handwritten-digit-classification-with-an-ann-in-pytorch.md)) each used a different loss function. This note formalizes why each was chosen, derives their gradients, and explains the mathematical properties that determine their behavior during training.
+The three projects ([Notes 11-13](12-handwritten-digit-classification-with-an-ann-in-pytorch.md)) each used a different loss function. This note formalizes why each was chosen, derives their gradients, and explains the mathematical properties that determine their behavior during training.
 
 **Critical insight**: The loss function is the objective you're optimizing. Choose the wrong loss, and you're training for the wrong goal.
 
 ## Continuity guide
 
-**From**: [Note 10 — Forward Propagation](forward-propagation-and-how-a-neural-network-predicts.md) (network makes a prediction)
+**From**: [Note 10 — Forward Propagation](10-forward-propagation-and-how-a-neural-network-predicts.md) (network makes a prediction)
 
 **In this note**: **Loss functions** — how to measure if a prediction is correct
 
-**Next**: [Note 15 — Backpropagation](backpropagation-part-1-what-backpropagation-is.md) (how to minimize the loss) → [Notes 16-17](backpropagation-part-2-how-backpropagation-works.md) (mathematical details)
+**Next**: [Note 15 — Backpropagation](15-backpropagation-part-1-what-backpropagation-is.md) (how to minimize the loss) → [Notes 16-17](16-backpropagation-part-2-how-backpropagation-works.md) (mathematical details)
 
 **Why this matters**: You must understand loss before backprop. Backprop computes $\frac{\partial \ell}{\partial \theta}$ — the derivative of *this* loss function.
 

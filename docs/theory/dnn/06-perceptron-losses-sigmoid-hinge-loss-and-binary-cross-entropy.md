@@ -10,23 +10,23 @@ tags: [loss-functions, sigmoid, hinge-loss, binary-cross-entropy, perceptron]
 
 # Perceptron losses, sigmoid, hinge loss, and binary cross-entropy
 
-The perceptron update rule ([Note 5](perceptron-training-and-the-perceptron-trick.md)) is intuitive, but it has a limitation: it does not give a smooth notion of "how wrong" a prediction is. That is why loss functions matter.
+The perceptron update rule ([Note 5](05-perceptron-training-and-the-perceptron-trick.md)) is intuitive, but it has a limitation: it does not give a smooth notion of "how wrong" a prediction is. That is why loss functions matter.
 
-**The problem**: Perceptron training uses hard {0, 1} labels. The gradient is 0 if correct, undefined if incorrect. Optimization is jerky and slow.
+**The problem**: Perceptron training uses hard 0/1 labels. The gradient is 0 if correct, undefined if incorrect. Optimization is jerky and slow.
 
 **The solution**: Use smooth loss functions that penalize "confidence" in wrong predictions. Enter sigmoid, hinge loss, and binary cross-entropy.
 
 ## Continuity guide
 
-**From**: [Note 5 — Perceptron Training](perceptron-training-and-the-perceptron-trick.md) (how the perceptron trick updates weights)
+**From**: [Note 5 — Perceptron Training](05-perceptron-training-and-the-perceptron-trick.md) (how the perceptron trick updates weights)
 
-**In this note**: Why hard {±1} training is limited; introduce sigmoid activation and **smooth loss functions** (BCE, hinge)
+**In this note**: Why hard ±1 training is limited; introduce sigmoid activation and **smooth loss functions** (BCE, hinge)
 
-**Next**: [Note 7 — Why Perceptron Fails](why-a-single-perceptron-fails-on-nonlinear-problems.md) (show XOR problem)
+**Next**: [Note 7 — Why Perceptron Fails](07-why-a-single-perceptron-fails-on-nonlinear-problems.md) (show XOR problem)
 
-**Then**: [Note 8 — MLP Notation](mlp-notation-inputs-weights-biases-layers-and-shapes.md) (formalize multi-layer network notation)
+**Then**: [Note 8 — MLP Notation](08-mlp-notation-inputs-weights-biases-layers-and-shapes.md) (formalize multi-layer network notation)
 
-**Later**: [Note 14 — Loss Functions](loss-functions-in-deep-learning.md) revisits all loss functions with full mathematical rigor
+**Later**: [Note 14 — Loss Functions](14-loss-functions-in-deep-learning.md) revisits all loss functions with full mathematical rigor
 
 ## Why we need a loss
 

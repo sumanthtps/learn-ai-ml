@@ -10,20 +10,20 @@ tags: [mlp, hidden-layers, nonlinearity, representations, ann, feature-learning]
 
 # Multi-layer perceptron intuition
 
-The perceptron ([Note 4](perceptron-basics-neuron-analogy-and-geometric-intuition.md)) failed on nonlinear problems like XOR ([Note 7](why-a-single-perceptron-fails-on-nonlinear-problems.md)) because one linear separator is insufficient. The MLP fixes that by stacking multiple layers with nonlinear activations, allowing the network to learn hierarchical intermediate representations.
+The perceptron ([Note 4](04-perceptron-basics-neuron-analogy-and-geometric-intuition.md)) failed on nonlinear problems like XOR ([Note 7](07-why-a-single-perceptron-fails-on-nonlinear-problems.md)) because one linear separator is insufficient. The MLP fixes that by stacking multiple layers with nonlinear activations, allowing the network to learn hierarchical intermediate representations.
 
 ![Multi-layer perceptron — input layer, one or more hidden layers with nonlinear activations, and an output layer; each layer computes a new representation of the data](https://commons.wikimedia.org/wiki/Special:Redirect/file/MultiLayerPerceptron.svg)
 *Source: [Wikimedia Commons — MultiLayerPerceptron](https://commons.wikimedia.org/wiki/File:MultiLayerPerceptron.svg) (CC BY-SA 4.0)*
 
 ## Continuity guide
 
-**From**: [Note 8 — MLP Notation](mlp-notation-inputs-weights-biases-layers-and-shapes.md) (how to write multi-layer equations)
+**From**: [Note 8 — MLP Notation](08-mlp-notation-inputs-weights-biases-layers-and-shapes.md) (how to write multi-layer equations)
 
 **In this note**: **Why hidden layers work** — the conceptual foundation of all deep learning. This is the most important insight in the course.
 
-**Next**: [Note 10 — Forward Propagation](forward-propagation-and-how-a-neural-network-predicts.md) (step-by-step: how input flows through the network) → Projects ([Notes 11-13](handwritten-digit-classification-with-an-ann-in-pytorch.md))
+**Next**: [Note 10 — Forward Propagation](10-forward-propagation-and-how-a-neural-network-predicts.md) (step-by-step: how input flows through the network) → Projects ([Notes 11-13](12-handwritten-digit-classification-with-an-ann-in-pytorch.md))
 
-**Then**: [Note 14 — Loss Functions](loss-functions-in-deep-learning.md) (what to minimize) → [Note 15 — Backpropagation](backpropagation-part-1-what-backpropagation-is.md) (how to minimize it)
+**Then**: [Note 14 — Loss Functions](14-loss-functions-in-deep-learning.md) (what to minimize) → [Note 15 — Backpropagation](15-backpropagation-part-1-what-backpropagation-is.md) (how to minimize it)
 
 **Why this is crucial**: This is the inflection point where you transition from "how single neurons work" to "how networks learn". Everything after this depends on understanding representation learning.
 

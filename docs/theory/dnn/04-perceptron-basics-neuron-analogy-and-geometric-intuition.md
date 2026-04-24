@@ -21,11 +21,11 @@ A perceptron is the simplest neural classifier: it computes a weighted sum of fe
 
 ## Continuity with the learning path
 
-**Coming from**: [Note 3 — NN Types](neural-network-types-deep-learning-history-and-applications.md) showed you the landscape of all architectures. Now we zoom in on the simplest building block.
+**Coming from**: [Note 3 — NN Types](03-neural-network-types-deep-learning-history-and-applications.md) showed you the landscape of all architectures. Now we zoom in on the simplest building block.
 
 **In this note**: You'll learn the perceptron — the atomic unit of all neural networks. Every CNN, RNN, and Transformer is built from perceptrons (or their variants).
 
-**Coming next**: [Note 5 — Perceptron Training](perceptron-training-and-the-perceptron-trick.md) shows how the perceptron learns from mistakes. Then [Note 7 — Why Perceptron Fails](why-a-single-perceptron-fails-on-nonlinear-problems.md) motivates why we need multiple layers ([Note 9 — MLP Intuition](multi-layer-perceptron-intuition.md)).
+**Coming next**: [Note 5 — Perceptron Training](05-perceptron-training-and-the-perceptron-trick.md) shows how the perceptron learns from mistakes. Then [Note 7 — Why Perceptron Fails](07-why-a-single-perceptron-fails-on-nonlinear-problems.md) motivates why we need multiple layers ([Note 9 — MLP Intuition](09-multi-layer-perceptron-intuition.md)).
 
 ## Why this topic matters
 

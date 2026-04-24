@@ -10,17 +10,17 @@ tags: [mlp, notation, tensors, shapes, matrices, ann]
 
 # MLP notation: inputs, weights, biases, layers, and shapes
 
-Once hidden layers are introduced ([Note 9](multi-layer-perceptron-intuition.md)), the next problem is notation. Without clear notation, forward propagation and backpropagation become confusing very quickly.
+Once hidden layers are introduced ([Note 9](09-multi-layer-perceptron-intuition.md)), the next problem is notation. Without clear notation, forward propagation and backpropagation become confusing very quickly.
 
 **Goal of this note**: Standardize the mathematical language so that when we write equations, we're all on the same page about what vectors, matrices, and dimensions mean.
 
 ## Continuity guide
 
-**From**: [Note 7 — Perceptron Failure](why-a-single-perceptron-fails-on-nonlinear-problems.md) (why we need hidden layers)
+**From**: [Note 7 — Perceptron Failure](07-why-a-single-perceptron-fails-on-nonlinear-problems.md) (why we need hidden layers)
 
 **In this note**: **Notation and tensor shapes** — how to think about dimensions when data flows through layers
 
-**Next**: [Note 9 — MLP Intuition](multi-layer-perceptron-intuition.md) (why hidden layers work) → [Note 10 — Forward Propagation](forward-propagation-and-how-a-neural-network-predicts.md) (step-by-step execution)
+**Next**: [Note 9 — MLP Intuition](09-multi-layer-perceptron-intuition.md) (why hidden layers work) → [Note 10 — Forward Propagation](10-forward-propagation-and-how-a-neural-network-predicts.md) (step-by-step execution)
 
 **Why this matters**: Forward pass → backpropagation both depend on getting dimensions right. A single mistake in shapes breaks the entire gradient computation.
 

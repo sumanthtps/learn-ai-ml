@@ -10,19 +10,19 @@ tags: [perceptron, training, update-rule, learning-rate, ann]
 
 # Perceptron training and the perceptron trick
 
-The previous note ([04 — Perceptron Basics](perceptron-basics-neuron-analogy-and-geometric-intuition.md)) explained what a perceptron computes. This note explains how its parameters move during learning.
+The previous note ([04 — Perceptron Basics](04-perceptron-basics-neuron-analogy-and-geometric-intuition.md)) explained what a perceptron computes. This note explains how its parameters move during learning.
 
 **Quick recap**: A perceptron computes $\hat{y} = \text{sign}(w^T x + b)$ and outputs ±1 based on whether the weighted sum crosses zero. But how do $w$ and $b$ actually change during training?
 
 ## Continuity guide
 
-**From**: [Note 4 — Perceptron Basics](perceptron-basics-neuron-analogy-and-geometric-intuition.md) (what the perceptron computes)
+**From**: [Note 4 — Perceptron Basics](04-perceptron-basics-neuron-analogy-and-geometric-intuition.md) (what the perceptron computes)
 
 **In this note**: The **perceptron trick** — how to update weights when you make a mistake
 
-**Next**: [Note 6 — Perceptron Losses](perceptron-losses-sigmoid-hinge-loss-and-binary-cross-entropy.md) shows that hard {±1} training is limited; we need smooth loss functions → sigmoid, BCE
+**Next**: [Note 6 — Perceptron Losses](06-perceptron-losses-sigmoid-hinge-loss-and-binary-cross-entropy.md) shows that hard ±1 training is limited; we need smooth loss functions → sigmoid, BCE
 
-**Then**: [Note 7 — Why Perceptron Fails](why-a-single-perceptron-fails-on-nonlinear-problems.md) (XOR problem) → [Note 9 — MLP Intuition](multi-layer-perceptron-intuition.md) (solution: add layers)
+**Then**: [Note 7 — Why Perceptron Fails](07-why-a-single-perceptron-fails-on-nonlinear-problems.md) (XOR problem) → [Note 9 — MLP Intuition](09-multi-layer-perceptron-intuition.md) (solution: add layers)
 
 ## The core question
 

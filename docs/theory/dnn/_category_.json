@@ -1,0 +1,9 @@
+{
+    "label": "DNN",
+    "position": 2,
+    "link": {
+      "type": "generated-index",
+      "description": "Deep learning master notes: perceptrons, backpropagation, optimization, CNNs, RNNs, attention, and transformers."
+    }
+  }
+  

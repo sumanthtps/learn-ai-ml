@@ -1,0 +1,9 @@
+{
+    "label": "Pytorch",
+    "position": 12,
+    "link": {
+      "type": "generated-index",
+      "description": "Learn PyTorch from tensors and autograd to CNNs, RNNs, transfer learning, and production-ready training practices."
+    }
+  }
+  

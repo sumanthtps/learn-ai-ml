@@ -1,10 +1,9 @@
-import type {ReactNode} from 'react';
-import clsx from 'clsx';
 import Link from '@docusaurus/Link';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
-import Layout from '@theme/Layout';
-import HomepageFeatures from '@site/src/components/HomepageFeatures';
 import Heading from '@theme/Heading';
+import Layout from '@theme/Layout';
+import clsx from 'clsx';
+import type { ReactNode } from 'react';
 
 import styles from './index.module.css';
 
@@ -21,7 +20,7 @@ function HomepageHeader() {
           <Link
             className="button button--secondary button--lg"
             to="/docs/intro">
-            Docusaurus Tutorial - 5min ⏱️
+            Tutorial - 5min
           </Link>
         </div>
       </div>
@@ -33,11 +32,18 @@ export default function Home(): ReactNode {
   const {siteConfig} = useDocusaurusContext();
   return (
     <Layout
-      title={`Hello from ${siteConfig.title}`}
+      title={siteConfig.title}
       description="Description will go into a meta tag in <head />">
       <HomepageHeader />
-      <main>
-        <HomepageFeatures />
+      <main className="container margin-vert--lg">
+        <section>
+          <Heading as="h2">Learn AI and ML by building</Heading>
+          <p>
+            Explore structured notes on Python, data science, machine learning,
+            deep learning, PyTorch, FastAPI, and MLOps with practical examples
+            and visual explanations.
+          </p>
+        </section>
       </main>
     </Layout>
   );

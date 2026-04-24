@@ -11,32 +11,35 @@ type FeatureItem = {
 
 const FeatureList: FeatureItem[] = [
   {
-    title: 'Easy to Use',
+    title: 'Structured Learning Path',
     Svg: require('@site/static/img/undraw_docusaurus_mountain.svg').default,
     description: (
       <>
-        Docusaurus was designed from the ground up to be easily installed and
-        used to get your website up and running quickly.
+        Step-by-step notes covering Python, Data Structures, Machine Learning,
+        Deep Learning, PyTorch, FastAPI, and MLOps — from fundamentals to
+        industry-ready practices.
       </>
     ),
   },
   {
-    title: 'Focus on What Matters',
+    title: 'Code-First Notes',
     Svg: require('@site/static/img/undraw_docusaurus_tree.svg').default,
     description: (
       <>
-        Docusaurus lets you focus on your docs, and we&apos;ll do the chores. Go
-        ahead and move your docs into the <code>docs</code> directory.
+        Every concept is backed by working code examples, visual explanations,
+        and common interview questions so you understand not just <em>how</em>,
+        but <em>why</em>.
       </>
     ),
   },
   {
-    title: 'Powered by React',
+    title: 'Real-World Projects',
     Svg: require('@site/static/img/undraw_docusaurus_react.svg').default,
     description: (
       <>
-        Extend or customize your website layout by reusing React. Docusaurus can
-        be extended while reusing the same header and footer.
+        Build CNNs, RNNs, LSTMs, transfer learning pipelines, REST APIs with
+        FastAPI, and end-to-end MLOps systems — the same stack used in
+        production AI teams.
       </>
     ),
   },

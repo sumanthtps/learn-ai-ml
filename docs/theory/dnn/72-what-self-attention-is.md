@@ -23,15 +23,75 @@ Self-attention computes a new representation for each token by attending to all 
 
 Self-attention is the core computational primitive of transformers. Every major modern language model (BERT, GPT, LLaMA, Gemini, Claude) is built on stacked self-attention layers. Understanding self-attention is the key to understanding how transformers process language, why they generalize better than RNNs for long sequences, and how capabilities like in-context learning emerge.
 
+## From words to numbers: the road to contextual embeddings
+
+Every NLP application starts with the same requirement: convert words into numbers, since computers only operate on numbers. The history of NLP is a sequence of increasingly better answers to "how do we vectorize words?":
+
+| Technique | How it works | Limitation |
+|-----------|--------------|-------------|
+| **One-Hot Encoding** | Each word = binary vector with one '1' | Inefficient, no semantic meaning |
+| **Bag of Words (BoW)** | Counts word frequencies | Loses order, no semantics |
+| **TF-IDF** | Weighted word frequencies | Still no semantic meaning |
+| **Word Embeddings** | Dense vectors capturing semantic meaning | **Static** — same vector for the same word in every sentence |
+
+Word embeddings were a real breakthrough — words with similar meaning end up with similar vectors, and each dimension captures some latent aspect (royalty, athleticism, technology, etc.):
+
+```
+KING      →  [6.2, 1.5, 0.9, 3.2, 0.1]
+QUEEN     →  [6.1, 1.6, 0.8, 3.1, 0.2]
+CRICKETER →  [0.1, 0.2, 5.1, 0.3, 4.2]
+```
+
+But embeddings are trained once on a large corpus and **never change** afterward — so they only capture the *average* meaning of a word across all training data, not its meaning in a specific context.
+
+**Example: the word "Apple"**
+
+| Sentence | Meaning |
+|----------|---------|
+| "An apple a day keeps the doctor away" | Fruit |
+| "Apple launched a new iPhone" | Technology company |
+
+If 90% of training data uses "Apple" as a fruit and 10% as a company, the embedding is biased toward fruit — even in sentences where Apple clearly means the tech company. Concretely, in:
+
+> "Apple launched a new phone while I was eating an orange"
+
+the static embedding for "Apple" still leans toward fruit, and the presence of "orange" only deepens the confusion. What we want is a vector for "Apple" that *adapts* to its sentence — pulled toward technology when surrounded by "launched, phone" and toward fruit when surrounded by "eating, day".
+
 ## The coreference problem: motivation
 
-Consider the sentence:
+The same problem appears in pronoun resolution. Consider the sentence:
 
 > "The animal didn't cross the street because **it** was too tired."
 
 What does "it" refer to — the animal or the street? To understand the sentence, a model must connect "it" to "animal" (not "street"). In a vanilla RNN, this information flows through every intermediate token (didn't, cross, the, street, because). If the gradient vanishes, the connection is lost.
 
-With self-attention, "it" and "animal" have a **direct computation path** — the attention score between them is computed explicitly, regardless of how many tokens separate them.
+With self-attention, "it" and "animal" have a **direct computation path** — the attention score between them is computed explicitly, regardless of how many tokens separate them. And the contextual representation of "it" can be pulled toward "animal" by exactly the same mechanism that pulls "Apple" toward "phone".
+
+## From static to contextual: the self-attention insight
+
+Self-attention is the mechanism that takes static word embeddings as input and produces **contextual embeddings** — new vectors that change based on surrounding words.
+
+```mermaid
+flowchart TD
+    A["Input Sentence\n'Apple launched a new phone ...'"] --> B["Static Embeddings\nfor each word"]
+    B --> C["SELF-ATTENTION"]
+    C --> D["Contextual Embeddings\nfor each word"]
+    D --> E["Used by Transformer"]
+```
+
+If "Apple" is surrounded by tech words ("launched", "phone") → its contextual embedding shifts toward technology. If surrounded by food words ("eating", "fruit") → it shifts toward fruit. Because the mechanism considers *all* words in the sentence and weights them by relevance, the model is not derailed by an unrelated fruit word like "orange" appearing nearby.
+
+The full evolution from raw text to context-aware vectors:
+
+```mermaid
+flowchart TD
+    P1["PROBLEM 1\nComputers don't understand words"] --> S1["SOLUTION 1\nVectorization — convert words to numbers"]
+    S1 --> P2["PROBLEM 2\nOne-Hot / BoW / TF-IDF lose semantic meaning"]
+    P2 --> S2["SOLUTION 2\nWord Embeddings — capture semantics"]
+    S2 --> P3["PROBLEM 3\nEmbeddings are STATIC — average meaning only"]
+    P3 --> S3["SOLUTION 3\nSelf-Attention — creates contextual embeddings"]
+    S3 --> R["RESULT\nTransformers → BERT, GPT, LLaMA, Claude, etc."]
+```
 
 ## The attention computation: step by step
 
@@ -175,6 +235,17 @@ print(f"Attention matrix:     {attn_weights.shape}")    # (2, 6, 6)
 print(f"Attention row sums:   {attn_weights[0].sum(-1)}")  # all 1.0
 ```
 
+## Key terminology
+
+| Term | Meaning |
+|------|---------|
+| **Static Embeddings** | Fixed vectors for words — same regardless of context |
+| **Contextual Embeddings** | Dynamic vectors that change based on surrounding words |
+| **Self-Attention** | The mechanism that converts static → contextual embeddings |
+| **Vectorization** | Converting words to numbers/vectors |
+| **Semantic Meaning** | The actual meaning of a word |
+| **Average Meaning** | Weighted average of all meanings across training data |
+
 ## Interview questions
 
 <details>
@@ -200,10 +271,11 @@ Without projections, Q = K = V = X — the model can only compare tokens in thei
 - Confusing the attention weight matrix $A$ with the output — $A$ is the weight distribution, the output is $AV$ (the weighted blend of values).
 - Assuming attention always attends locally — attention can focus on any position, including the very beginning of a long sequence.
 - Forgetting that all three projections $W^Q, W^K, W^V$ are learned — they are not fixed (unlike a database retrieval system).
+- Treating word embeddings as if they were already context-aware — they are static averages over the corpus, which is exactly the limitation self-attention is designed to fix.
 
 ## Final takeaway
 
-Self-attention gives every token a direct, content-based communication channel to every other token. The mechanism is three projections, a dot-product similarity, a softmax, and a weighted average — five operations that enable the entire capability of modern transformers.
+Self-attention gives every token a direct, content-based communication channel to every other token. Concretely: it converts static word embeddings into contextual ones — a vector for "Apple" that bends toward "phone" or toward "orange" depending on the rest of the sentence. The mechanism is three projections, a dot-product similarity, a softmax, and a weighted average — five operations that enable the entire capability of modern transformers.
 
 ## References
 

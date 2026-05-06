@@ -23,6 +23,102 @@ Self-attention computes token relevance as the cosine-like similarity between qu
 
 The geometric view explains several otherwise puzzling facts: why scaling by $\sqrt{d_k}$ is necessary (high-dimensional dot products grow in magnitude), why different attention heads learn different "perspectives" (each head uses a different projection), and why attention patterns are interpretable (high attention weight = directional alignment between query and key).
 
+## A concrete 2D walkthrough: "Money Bank"
+
+Before going abstract, let's trace the geometry through a small worked example with two words.
+
+**Setup:**
+
+| Symbol | Value | Meaning |
+|--------|-------|---------|
+| **e_money** | (2, 5) | Static embedding of "Money" |
+| **e_bank** | (7, 3) | Static embedding of "Bank" |
+| **W_Q, W_K, W_V** | 2×2 matrices | Learnable projection weights |
+
+Plotted in a 2D plane, e_money and e_bank are far apart — they live in different semantic regions.
+
+**Step 1 — Three new vectors per word.** Multiplying each embedding by W_Q, W_K, W_V moves it to a **new position** in vector space:
+
+```
+e_money (2,5) → q_money, k_money, v_money   (three different locations)
+e_bank  (7,3) → q_bank,  k_bank,  v_bank    (three different locations)
+```
+
+The same original vector lands in three different positions because each matrix rotates and scales space differently.
+
+**Step 2 — Similarity by angle.** To compute the contextual embedding of "Bank" (`y_bank`), we need two similarity scores:
+
+| Operation | Question |
+|-----------|----------|
+| q_bank · k_money | How much should "Bank" attend to "Money"? |
+| q_bank · k_bank | How much should "Bank" attend to itself? |
+
+Each is a dot product, which measures angular alignment:
+
+| Angle θ | cos θ | Dot product | Similarity |
+|---------|-------|-------------|------------|
+| 0° (same direction) | 1 | Maximum | Very high |
+| 90° (perpendicular) | 0 | Zero | None |
+| 180° (opposite) | −1 | Negative | Dissimilar |
+
+Suppose the geometry works out to:
+
+```
+q_bank vs k_money → large angle → dot product = 10  (low similarity)
+q_bank vs k_bank  → small angle → dot product = 32  (high similarity)
+```
+
+**Step 3 — Scale, then softmax.** With $d_k = 2$ (so $\sqrt{2} \approx 1.414$):
+
+| Raw score | After ÷ √2 |
+|-----------|------------|
+| 10 | 7.07 |
+| 32 | 22.63 |
+
+After softmax (illustrative result):
+- $w_{21} = 0.2$ (weight from "Money" → 20% influence)
+- $w_{22} = 0.8$ (weight from "Bank" itself → 80% influence)
+
+**Step 4 — Vector addition.** Scale each value vector by its attention weight, then add them:
+
+```
+Scaled v_money = 0.2 · v_money   (short — small contribution)
+Scaled v_bank  = 0.8 · v_bank    (longer — large contribution)
+
+y_bank = (0.2 · v_money) + (0.8 · v_bank)   [parallelogram law]
+```
+
+Geometrically the result is a **convex combination** — a point inside the region spanned by the value vectors, pulled toward the higher-weight ones.
+
+### The "gravity" insight
+
+Comparing the original and contextual embeddings:
+
+| Embedding | Position | Character |
+|-----------|----------|-----------|
+| e_bank (original) | Far from e_money | Static — ignores context |
+| y_bank (contextual) | **Pulled toward e_money** | Dynamic — encodes context |
+
+Self-attention acts like gravity: surrounding words exert a pull on each word's embedding proportional to their similarity (attention weight). Same static embedding, different sentences:
+
+- "Money bank" context → e_bank pulled toward the financial cluster
+- "River bank" context → e_bank pulled toward the geographical cluster
+
+Two very different contextual embeddings emerge from one static embedding, just by changing the surrounding words.
+
+### Step-by-step geometric summary
+
+| Step | Operation | Geometric meaning |
+|------|-----------|-------------------|
+| 1 | Get embeddings | Points in vector space |
+| 2 | Multiply by W_Q, W_K, W_V | Move points to new positions (rotation + scaling) |
+| 3 | Dot product Q·K | Measure angle between vectors (directional similarity) |
+| 4 | Scale by √dₖ | Normalize variance — keep softmax well-behaved |
+| 5 | Softmax | Convert scores to competitive probability weights |
+| 6 | Multiply weights × V | Scale vectors by their importance |
+| 7 | Vector addition | Parallelogram law — combine scaled vectors |
+| 8 | Result Y | Weighted average — new point in value space |
+
 ## Dot products as directional similarity
 
 For two vectors $a, b \in \mathbb{R}^d$:
@@ -138,7 +234,7 @@ is a point in value space that is a **convex combination** of all value vectors 
 - If token $i$ attends uniformly to all tokens: the output is the centroid of all value vectors
 - If token $i$ attends almost entirely to token $j$: the output is approximately $v_j$ — the model "copies" token $j$'s value representation into position $i$
 
-This is why attention is sometimes described as a **routing mechanism**: it moves information from wherever it is needed to wherever it is requested.
+This is exactly the gravity picture from the 2D walkthrough at scale: each token's contextual representation is *pulled* toward the value vectors of the tokens it attends to most. Attention is sometimes described as a **routing mechanism**: it moves information from wherever it is needed to wherever it is requested.
 
 ## Python code: visualizing attention geometry
 
@@ -239,6 +335,8 @@ After attention, all heads' outputs are concatenated and projected back to $d_{\
 | Softmax | Turns raw alignments into competitive probability weights |
 | $W^V$ projection | Maps tokens to "value content" (what gets retrieved) |
 | Output $\sum_j A[i,j] v_j$ | Convex combination — weighted position in value space |
+
+> **One-line geometric summary:** Self-attention geometrically "pulls" each word's embedding toward surrounding words in proportion to their relevance — different contexts produce different pulls, and therefore different contextual embeddings for the same word.
 
 ## Interview questions
 

@@ -23,6 +23,125 @@ Self-attention maps a sequence of $n$ token embeddings to $n$ context vectors, e
 
 Understanding the mechanics of attention at the code level removes the mystery from transformers. Once you can trace shapes and values through a single attention head, multi-head attention, encoder blocks, and decoder blocks are straightforward extensions. Every debugging task in transformer training starts here.
 
+## Building self-attention from first principles
+
+Before diving into the formal computation, it helps to *derive* self-attention as if inventing it — this gives intuition for *why* the QKV machinery exists and *why* the projection matrices have to be learned.
+
+### The starting problem
+
+Take two sentences with the word "Bank" in different contexts:
+
+| Sentence | Context | Meaning |
+|----------|---------|---------|
+| "Money bank grows" | Financial | Institution |
+| "River bank flows" | Geography | River edge |
+
+Static embeddings give "Bank" the same vector in both. Our goal is to produce a representation that is context-dependent.
+
+### Step 1 — Represent each word as a combination of all words
+
+The key insight: instead of representing "Bank" as just itself, represent it as a weighted blend of *all* words in the sentence. For "Money Bank Grows":
+
+```
+y_money = α₁₁ · e_money + α₁₂ · e_bank + α₁₃ · e_grows
+y_bank  = α₂₁ · e_money + α₂₂ · e_bank + α₂₃ · e_grows
+y_grows = α₃₁ · e_money + α₃₂ · e_bank + α₃₃ · e_grows
+```
+
+Now `y_bank` differs between "Money bank grows" and "River bank flows" because the surrounding words differ.
+
+### Step 2 — Similarity via dot product
+
+The weights α should reflect **how related each pair of words is**. The standard mathematical tool for measuring vector similarity is the dot product:
+
+```
+similarity(eᵢ, eⱼ) = eᵢ · eⱼ
+```
+
+| Pair | Dot Product | Meaning |
+|------|-------------|---------|
+| (6,1) · (4,2) | 6×4 + 1×2 = 26 | High similarity |
+| (6,1) · (1,5) | 6×1 + 1×5 = 11 | Low similarity |
+
+Then apply softmax row-wise to turn raw scores into weights that sum to 1:
+
+```
+αᵢⱼ = softmax(eᵢ · eⱼ)
+```
+
+This is already a complete (but naive) self-attention. It runs fully in parallel — every output vector can be computed simultaneously. But it has two problems.
+
+### Problem 1 — No sequence order
+
+Parallel computation discards word order. "Dog bites man" and "Man bites dog" would produce the same set of contextual embeddings. This is later solved by **positional encoding**.
+
+### Problem 2 — No learnable parameters
+
+The naive version has zero trainable weights — dot product and softmax are fixed operations. As a result:
+
+- Embeddings are general-purpose, not task-specific
+- "Piece of cake" would always lean toward the literal meaning (food), never the idiomatic meaning (easy task)
+- "Break a leg" would mean physical injury, not good luck
+
+Different downstream tasks need different contextual embeddings. The model must be able to *learn* what context matters for the task at hand.
+
+### The QKV solution: three roles, three vectors
+
+When computing `y_bank`, the embedding of "Bank" plays three distinct roles:
+
+| Role | Function |
+|------|----------|
+| **Query (Q)** | "How similar are you to me?" — asks the question |
+| **Key (K)** | "Here's what I advertise" — answers the query |
+| **Value (V)** | "Here's my actual content" — provides what gets blended |
+
+A useful analogy: a matrimonial profile. Using one document for all three roles is like submitting your 300-page autobiography as your dating profile, search criteria, *and* conversation starter. Each role needs a focused, specialized representation. The same logic applies to word embeddings — we need three specialized vectors per word, produced by three learnable projection matrices:
+
+```
+q = e × W_Q    (Query vector)
+k = e × W_K    (Key vector)
+v = e × W_V    (Value vector)
+```
+
+`W_Q`, `W_K`, `W_V` are trained by backpropagation, shared across all words in the sentence, and learn the projections that produce the best contextual embeddings for the downstream task.
+
+### Putting it together — the full mechanism
+
+For sentence "Money Bank Grows":
+
+1. **Static embeddings:** `e_money`, `e_bank`, `e_grows`
+2. **Project to Q, K, V** using `W_Q`, `W_K`, `W_V`
+3. **Similarity scores:** `sᵢⱼ = qᵢ · kⱼ` for all pairs
+4. **Softmax → weights:** `αᵢⱼ = softmax(sᵢⱼ)` per row
+5. **Weighted sum of Values:** `yᵢ = Σⱼ αᵢⱼ · vⱼ`
+
+In matrix form (fully parallelizable on GPU):
+
+```mermaid
+flowchart TD
+    X["X\nn × d"] --> WQ["× W_Q\nQ  n × d_k"]
+    X --> WK["× W_K\nK  n × d_k"]
+    X --> WV["× W_V\nV  n × d_k"]
+    WQ --> S["S = Q × Kᵀ\nn × n"]
+    WK --> S
+    S --> A["A = softmax(S)\nn × n"]
+    A --> Y["Y = A × V\nn × d_k\nContextual Embeddings"]
+    WV --> Y
+```
+
+The full derivation in one table:
+
+| Step | Discovery | Why it matters |
+|------|-----------|----------------|
+| 1 | Words need vectors | Computers require numbers |
+| 2 | Static embeddings lose context | "Bank" = same vector everywhere |
+| 3 | Blend all words together | Context changes the representation |
+| 4 | Dot product measures similarity | Principled way to weight the blend |
+| 5 | Softmax normalizes weights | Scores → probabilities summing to 1 |
+| 6 | No learning parameters | Can't adapt to specific tasks |
+| 7 | Separate Q, K, V roles | Specialized vectors for each function |
+| 8 | Learnable W_Q, W_K, W_V | Task-specific contextual embeddings |
+
 ## The complete computation: step by step
 
 Given input matrix $X \in \mathbb{R}^{n \times d_{\text{model}}}$ (a sequence of $n$ token embeddings):
@@ -236,6 +355,18 @@ causal_mask = torch.triu(torch.ones(seq_len, seq_len), diagonal=1).bool()
 token_ids = torch.tensor([[5, 3, 7, 0, 0]])   # last 2 are padding
 padding_mask = (token_ids == 0).unsqueeze(1).expand(-1, 5, -1)  # (1, 5, 5)
 ```
+
+## Key terminology
+
+| Term | Symbol | Definition |
+|------|--------|------------|
+| Static embedding | e | Fixed vector — same regardless of context |
+| Contextual embedding | y | Dynamic vector — changes based on surrounding words |
+| Query | q | Vector that asks "how relevant are you to me?" |
+| Key | k | Vector that answers similarity queries |
+| Value | v | Vector providing content to aggregate |
+| Attention weight | α | Importance score; sums to 1 across all positions |
+| Learnable matrix | W_Q, W_K, W_V | Trained to produce optimal Q, K, V for the task |
 
 ## Interview questions
 

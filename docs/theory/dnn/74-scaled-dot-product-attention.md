@@ -35,6 +35,28 @@ where:
 - $V \in \mathbb{R}^{m \times d_v}$: value matrix ($m$ values, each of dimension $d_v$)
 - Output $\in \mathbb{R}^{n \times d_v}$
 
+If you compare this to the unscaled formula derived from first principles — `softmax(Q × Kᵀ) × V` — the only difference is the $\sqrt{d_k}$ factor. Why is it there?
+
+## What is $d_k$, and why does it matter?
+
+$d_k$ is simply the dimension of the Key (and Query) vectors — the output dimension of the projection $W^K$ (and $W^Q$):
+
+```
+Word embedding (e)  : 1 × d_model
+         ×
+Weight matrix (Wᴷ)  : d_model × d_k
+         =
+Key vector (k)      : 1 × d_k
+```
+
+| Model scale | d_model | d_k |
+|-------------|---------|-----|
+| Tiny example | 3 | 3 |
+| Medium | 100 | 100 |
+| Original Transformer | 512 | 64 (per head) |
+
+The reason $d_k$ matters is that the dot product $q \cdot k$ is a sum of $d_k$ individual products — and the more terms you sum, the larger the variance grows.
+
 ## Why the $\sqrt{d_k}$ scaling is necessary
 
 ### The variance argument
@@ -53,6 +75,16 @@ $$
 
 The standard deviation is $\sqrt{d_k}$. As $d_k$ grows, the dot products grow in magnitude. For $d_k = 512$: typical dot products have magnitude ~$\sqrt{512} \approx 22.6$.
 
+This shows up clearly in experiments — sample 1000 random vector pairs at each dimension and look at the spread of their dot products:
+
+| Vector dimension | Typical dot product range | Variance |
+|-----------------|--------------------------|---------|
+| 3 | −5 to +5 | Low |
+| 100 | −10 to +10 | Medium |
+| 1000 | −30 to +30 | High |
+
+The variance scales **linearly** with $d_k$.
+
 ### The softmax saturation problem
 
 The softmax function:
@@ -67,13 +99,32 @@ $$
 \text{softmax}([22.6, 0, 0, 0]) \approx [1, 0, 0, 0]
 $$
 
+You can see this on a smaller scale too:
+
+| Softmax input | Softmax output | Effect |
+|---------------|----------------|--------|
+| [2, 3, 4] | [0.09, 0.24, 0.67] | Balanced — good |
+| [2, 3, 100] | [≈0, ≈0, ≈1] | Near one-hot — bad |
+
 In saturated regions, softmax gradients are near zero:
 
 $$
 \frac{\partial \text{softmax}(x_i)}{\partial x_i} = \text{softmax}(x_i)(1 - \text{softmax}(x_i)) \approx 1 \times 0 = 0
 $$
 
-Training stalls because gradients cannot flow back through the attention layer.
+Training stalls because gradients cannot flow back through the attention layer. The full failure chain:
+
+```mermaid
+flowchart TD
+    A["High dₖ"] --> B["High variance in Q·Kᵀ"]
+    B --> C["Some scores dominate"]
+    C --> D["Softmax collapses to near one-hot"]
+    D --> E["Gradients ≈ 0 for most tokens"]
+    E --> F["Those tokens stop learning"]
+    F --> G["Unstable / failed training"]
+```
+
+A useful analogy: imagine a classroom where the teacher only notices the tallest children waving their hands highest — shorter children's questions are never answered. High-variance attention behaves the same way: only the loudest signal gets through, and everything else is invisible to backpropagation.
 
 ### The fix: scale by $1/\sqrt{d_k}$
 
@@ -84,6 +135,19 @@ $$
 $$
 
 The scaled dot products have unit variance regardless of $d_k$. The softmax now operates on inputs with standard deviation ~1, producing well-calibrated attention distributions.
+
+To pick the scaling constant from scratch: we want the constant $c$ such that variance stays at $\sigma^2$:
+
+$$\text{Var}\!\left(\frac{q \cdot k}{c}\right) = \frac{1}{c^2} \cdot \text{Var}(q \cdot k) = \frac{d_k \cdot \sigma^2}{c^2} = \sigma^2$$
+
+Solving gives $c^2 = d_k$, hence $c = \sqrt{d_k}$. The effect across dimensions:
+
+| $d_k$ | Unscaled variance | Scaling factor | Scaled variance |
+|----|-------------------|----------------|-----------------|
+| 1 | $\sigma^2$ | ÷ 1 | $\sigma^2$ |
+| 2 | $2\sigma^2$ | ÷ √2 | $\sigma^2$ |
+| 64 | $64\sigma^2$ | ÷ 8 | $\sigma^2$ |
+| 512 | $512\sigma^2$ | ÷ ~22.6 | $\sigma^2$ |
 
 ```mermaid
 flowchart LR
@@ -224,6 +288,18 @@ Scaled dot-product is the fastest (pure matrix multiplication) and the standard 
 | **Total** | **$O(n^2 d)$** | Quadratic in sequence length |
 
 For $n = 1024$ and $d = 512$: ~$5 \times 10^8$ multiply-adds per attention layer. This is why efficient attention variants (FlashAttention, sparse attention) are active research areas.
+
+## Summary
+
+| Concept | Explanation |
+|---------|-------------|
+| **$d_k$** | Dimension of Key/Query vectors |
+| **Problem** | Dot product variance grows linearly with $d_k$ |
+| **Consequence** | Softmax saturates → vanishing gradients |
+| **Solution** | Divide by $\sqrt{d_k}$ before softmax |
+| **Result** | Constant variance; stable training at any scale |
+
+> **One-sentence summary:** We divide by $\sqrt{d_k}$ to keep the variance of $Q \cdot K^T$ constant, preventing softmax from saturating and ensuring gradients can flow during training regardless of embedding dimension.
 
 ## Interview questions
 

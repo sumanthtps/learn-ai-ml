@@ -23,6 +23,23 @@ Multi-head attention projects queries, keys, and values into $h$ separate subspa
 
 The jump from single-head to multi-head attention is the key architectural move that makes transformers powerful in practice. A single attention head can only attend to one type of relationship at once. Multiple heads allow the model to build a richer, multi-perspective representation of context. Understanding multi-head attention is understanding the core computation in every transformer block.
 
+## The ambiguity problem: motivation
+
+Self-attention generates a single contextual embedding per token, which means it can only express **one perspective** on the sentence. But natural language is often genuinely ambiguous, and a good model should be able to consider multiple readings at once. Consider:
+
+> "The man saw the astronomer with a telescope."
+
+Two valid interpretations exist:
+
+| Interpretation | Meaning | Strong relationship |
+|----------------|---------|---------------------|
+| **(1)** The man used a telescope to see the astronomer | "with a telescope" attaches to "saw" | **man ↔ telescope** |
+| **(2)** The man saw an astronomer who had a telescope | "with a telescope" attaches to "astronomer" | **astronomer ↔ telescope** |
+
+A single self-attention head will tend to learn one of these patterns — high attention from "telescope" to "man" *or* from "telescope" to "astronomer", but not both. Real applications need both: a summarizer should be able to surface either reading, a question-answering system should know which interpretation matches the question, and so on.
+
+The fix is simple in spirit: **run several self-attention modules in parallel**, each free to learn its own attention pattern. Each parallel module is called a **head**. With $h$ heads, the model can simultaneously capture $h$ different perspectives on the same sequence — and crucially, since the heads are independent they can be computed in parallel with no extra wall-clock cost.
+
 ## The multi-head attention formula
 
 $$
@@ -49,6 +66,46 @@ Parameters:
 
 The standard choice: $d_k = d_v = d_{\text{model}} / h$.
 
+## Step-by-step walkthrough
+
+Take a tiny example: sentence "Money Bank" with $d_{\text{model}} = 4$ and $h = 2$ heads (so $d_k = 2$ per head).
+
+**Step 1 — Static embeddings:**
+```
+e_money, e_bank ∈ ℝ⁴
+X = [e_money; e_bank]   # shape (2 × 4)
+```
+
+**Step 2 — One set of projection matrices per head.** Instead of one set $(W^Q, W^K, W^V)$, create $h = 2$ sets:
+```
+Head 1: W_Q¹, W_K¹, W_V¹    (each 4 × 2 if d_k = 2 per head)
+Head 2: W_Q², W_K², W_V²    (each 4 × 2)
+```
+
+**Step 3 — Q, K, V per head:**
+```
+Q¹ = X · W_Q¹,   K¹ = X · W_K¹,   V¹ = X · W_V¹
+Q² = X · W_Q²,   K² = X · W_K²,   V² = X · W_V²
+```
+
+**Step 4 — Self-attention inside each head:**
+```
+Z¹ = softmax(Q¹ · (K¹)ᵀ / √d_k) · V¹   # shape (2 × d_k) per head
+Z² = softmax(Q² · (K²)ᵀ / √d_k) · V²
+```
+Each `Zⁱ` is a set of contextual embeddings produced from head $i$'s perspective.
+
+**Step 5 — Concatenate the heads' outputs:**
+```
+Z = concat(Z¹, Z²)   # shape (2 × h·d_k) = (2 × 4)
+```
+
+**Step 6 — Output projection $W^O$:**
+```
+Output = Z · W^O   # W^O is (h·d_k × d_model) = (4 × 4)
+```
+This brings the result back to $d_{\text{model}}$ and lets the model *learn how to combine* the perspectives — `W^O` weights and mixes the heads.
+
 ## Why multiple heads?
 
 A single attention head learns one "way of looking at" the sequence — one set of query-key relationships. Different linguistic phenomena require different attention patterns:
@@ -62,16 +119,25 @@ A single attention head learns one "way of looking at" the sequence — one set 
 
 With $h = 8$ heads of dimension $d_k = 64$ each, the model can simultaneously represent 8 different "perspectives" on the sequence, then combine them.
 
+For the ambiguous sentence "The man saw the astronomer with a telescope", attention visualization tools typically show one head with strong **man ↔ telescope** weight (interpretation 1) and a different head with strong **astronomer ↔ telescope** weight (interpretation 2). Both readings live inside the same forward pass.
+
 ## Dimension accounting
 
-For a transformer with $d_{\text{model}} = 512$ and $h = 8$:
+For a transformer with $d_{\text{model}} = 512$ and $h = 8$ (the original paper's setup):
 
 - Each head dimension: $d_k = d_v = 512 / 8 = 64$
 - Each head produces output: $(n \times 64)$
 - Concatenation: $(n \times 8 \times 64) = (n \times 512)$
 - After $W^O$ projection: $(n \times 512)$ (back to $d_{\text{model}}$)
 
-The total computation is equivalent to one full-dimensional attention operation, but split across 8 independent subspaces.
+The total computation is equivalent to one full-dimensional attention operation, but split across 8 independent subspaces. The trade-off is summarized by the per-head dimension reduction:
+
+| Approach | Per-head dimension | Total computation | Perspectives |
+|----------|--------------------|--------------------|--------------|
+| 1 head, full $d_{\text{model}}$ | 512 | $\approx O(n^2 \cdot 512)$ | 1 |
+| 8 heads, $d_{\text{model}}/h$ each | 64 | $8 \cdot O(n^2 \cdot 64) = O(n^2 \cdot 512)$ | **8** |
+
+Same FLOPs, eight perspectives.
 
 ```mermaid
 flowchart TD
@@ -84,6 +150,33 @@ flowchart TD
     concat --> WO["× W_O"]
     WO --> out["Output\n(n × d_model)"]
 ```
+
+## Why concat + $W^O$?
+
+The two trailing operations are not just bookkeeping — each plays a specific role:
+
+| Step | Purpose |
+|------|---------|
+| **Concatenation** | Stack each head's perspective into one vector per token |
+| **Linear projection $W^O$** | Learn how to weight and mix the perspectives |
+| **Output dimension match** | Bring the result back to $d_{\text{model}}$ so layers can stack |
+
+Without $W^O$, the heads would be independent slabs of representation glued together with no mechanism for the model to combine them. With $W^O$, every output dimension is a learned linear combination of all heads' outputs — effectively
+$$
+\text{Final}_d = w_{d,1} \cdot \text{head}_1 + w_{d,2} \cdot \text{head}_2 + \cdots + w_{d,h} \cdot \text{head}_h
+$$
+where the $w_{d,i}$ are learned during training.
+
+## Single-head vs multi-head: comparison
+
+| Aspect | Single-head self-attention | Multi-head attention |
+|--------|----------------------------|----------------------|
+| Number of perspectives | 1 | $h$ (typically 8) |
+| Number of weight matrices | 3 ($W^Q, W^K, W^V$) | $3h + 1$ ($h$ sets of QKV plus $W^O$) |
+| Per-head dimension | $d_{\text{model}}$ | $d_{\text{model}} / h$ |
+| Final combination | Direct output | Concat + linear projection |
+| Computational cost | Base | $\approx$ same (due to dimension reduction) |
+| Capability | Single relationship type | Multiple relationship types in parallel |
 
 ## PyCharm / Python code
 
@@ -222,7 +315,11 @@ Attention head analysis studies have found different heads emergently specialize
 - Some heads attend to positional neighbors
 - Some heads copy information directly (attending mostly to self)
 
-This interpretability is one reason transformers are easier to analyze than RNNs.
+This interpretability is one reason transformers are easier to analyze than RNNs. Going back to the telescope example: visualization tools commonly show one head focusing the "telescope" query on "man", while another head focuses the same query on "astronomer" — the two competing readings live inside different heads of the same layer.
+
+## Interview-ready answer
+
+> "Self-attention can only capture one perspective from a sentence — but language is often ambiguous (e.g., 'The man saw the astronomer with a telescope' has two readings). Multi-head attention solves this by running several self-attention modules in parallel, each with its own learned $W^Q$, $W^K$, $W^V$ matrices. Each head can specialize in a different relationship — one head might bind 'telescope' to 'man', another to 'astronomer'. The original transformer uses 8 heads of dimension 64 (from $d_{\text{model}} = 512$); their outputs are concatenated and passed through a final linear projection $W^O$ that learns how to mix the perspectives. The clever part is that 8 heads of dimension 64 cost roughly the same FLOPs as 1 head of dimension 512, so we get 8 perspectives essentially for free."
 
 ## Interview questions
 
@@ -256,10 +353,11 @@ In self-attention, Q = K = V = X (the same input sequence). The projections W^Q,
 - Forgetting the output projection $W^O$ — without it, the heads are independent and cannot combine their information.
 - Assuming more heads are always better — beyond a certain point, more heads means smaller per-head dimension, which may be too small to capture useful relationships. Typically 8–16 heads is standard.
 - Not using `batch_first=True` in PyTorch's `nn.MultiheadAttention` — the default expects `(seq, batch, d)` which is inconsistent with most other PyTorch layers.
+- Treating heads as if they were post-hoc averaging — they are independent learned subspaces, with their interactions fully delegated to $W^O$.
 
 ## Final takeaway
 
-Multi-head attention is scaled dot-product attention run in $h$ parallel subspaces, followed by concatenation and an output projection. The multiple heads are what gives transformers their ability to simultaneously track syntactic structure, semantic content, and positional patterns — enabling the rich contextual representations that power modern language models.
+Multi-head attention is scaled dot-product attention run in $h$ parallel subspaces, followed by concatenation and an output projection. The multiple heads are what gives transformers their ability to simultaneously track syntactic structure, semantic content, and positional patterns — enabling the rich contextual representations that power modern language models. One forward pass, many perspectives, the same compute budget.
 
 ## References
 

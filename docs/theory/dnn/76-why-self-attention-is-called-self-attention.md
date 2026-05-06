@@ -10,7 +10,12 @@ tags: [self-attention, cross-attention, transformers, attention, deep-learning]
 
 # Why self-attention is called self-attention
 
-The word "self" in self-attention has a precise meaning: **queries, keys, and values all come from the same sequence**. This is in contrast to cross-attention, where queries come from one sequence (the decoder) and keys/values come from another (the encoder). Understanding this distinction clarifies the role of each attention type in the full transformer architecture.
+The name has two pieces, and each carries a precise meaning:
+
+1. **Why "attention"?** — Because self-attention performs the *exact same three operations* as classical Bahdanau / Luong attention: compute query-key alignment, normalize via softmax, weight-sum the values. The mathematical machinery is identical.
+2. **Why "self"?** — Because queries, keys, and values all come from the **same sequence**. Unlike encoder-decoder attention, which connects two different sequences, self-attention is a sequence attending to itself.
+
+Understanding both halves clarifies the role of each attention type in the full transformer architecture.
 
 ## One-line definition
 
@@ -23,9 +28,49 @@ Self-attention is attention where a sequence attends to itself — $Q$, $K$, and
 
 The "self" vs. "cross" distinction determines what information a model can access at each layer. Self-attention builds rich within-sequence context; cross-attention bridges two sequences. Knowing which type is used where explains why encoder-only models (BERT) are good at understanding, why decoder-only models (GPT) generate autoregressively, and why encoder-decoder models (T5) work for translation.
 
-## The naming: where Q, K, V come from
+## Why is it called "attention"?
 
-In the general attention framework:
+Self-attention inherits the name from the original Bahdanau / Luong attention used in seq2seq models. Despite looking very different at first glance — no encoder, no decoder, no recurrent hidden states — the underlying mathematics is the same.
+
+### Quick recap of seq2seq attention
+
+In Bahdanau's setup, an encoder LSTM produces hidden states $h_1, \ldots, h_T$ for the input sentence. At each decoder step $i$, the decoder needs to focus on different parts of the input. Instead of using a single fixed context vector, attention computes a fresh context vector $c_i$ each step:
+
+1. **Alignment scores:** $e_{ij} = \text{align}(s_i, h_j) = s_i \cdot h_j$
+2. **Normalization:** $\alpha_{ij} = \text{softmax}(e_{ij})$
+3. **Context vector:** $c_i = \sum_j \alpha_{ij} \cdot h_j$
+
+Here $s_i$ (decoder state) plays the role of "what am I asking?", and $h_j$ (encoder states) play both "what do I advertise?" and "what content do I carry?".
+
+### Self-attention written in the same form
+
+Now apply self-attention to a single sentence (no encoder, no decoder), say "Turn off the lights". For the contextual embedding of "turn":
+
+1. **Alignment scores:** $e_{1j} = q_{\text{turn}} \cdot k_j$ for each $j \in \{\text{turn, off, the, lights}\}$
+2. **Normalization:** $\alpha_{1j} = \text{softmax}(e_{1j})$
+3. **Output:** $y_{\text{turn}} = \sum_j \alpha_{1j} \cdot v_j$
+
+The three steps are mathematically identical to Bahdanau's. The only thing that changed is *where* Q, K, V come from:
+
+| Step | Bahdanau / Luong attention | Self-attention |
+|------|----------------------------|----------------|
+| 1. Alignment | $e_{ij} = s_i \cdot h_j$ | $e_{ij} = q_i \cdot k_j$ |
+| 2. Normalization | $\alpha_{ij} = \text{softmax}(e_{ij})$ | $\alpha_{ij} = \text{softmax}(e_{ij})$ |
+| 3. Context vector | $c_i = \sum_j \alpha_{ij} \cdot h_j$ | $y_i = \sum_j \alpha_{ij} \cdot v_j$ |
+
+The role mapping:
+
+| Bahdanau / Luong | Self-attention | Role |
+|------------------|----------------|------|
+| $s_i$ (decoder state) | $q_i$ (query vector) | Asks: "what info do I need?" |
+| $h_j$ (encoder states) | $k_j$ (key vectors) | Answers: "here's what I have" |
+| $h_j$ (same vectors) | $v_j$ (value vectors) | Provides actual content |
+
+Because the three operations are identical, self-attention is genuinely a member of the attention family. Architecturally it looks different (no encoder/decoder, learnable QKV projections instead of recurrent states), but the mathematical core is the same.
+
+## Why is it called "self"?
+
+The "self" refers to where Q, K, V come from. In the general attention framework:
 
 $$
 \text{Attention}(Q, K, V) = \text{softmax}\!\left(\frac{QK^T}{\sqrt{d_k}}\right)V
@@ -44,6 +89,18 @@ In self-attention, the sequence attends to itself:
 $$
 Q = X W^Q, \quad K = X W^K, \quad V = X W^V \quad \text{(all from the same } X\text{)}
 $$
+
+Bahdanau's attention is **inter-sequence** (between two different sequences — input and output). Self-attention is **intra-sequence** (within one sequence).
+
+| Property | Bahdanau / Luong | Self-attention |
+|----------|------------------|----------------|
+| Number of sequences | 2 (different) | 1 (same) |
+| Query source | Decoder hidden state ($s_i$) | Query vector from same word ($q_i$) |
+| Key source | Encoder hidden states ($h_j$) | Key vectors from same sequence ($k_j$) |
+| Value source | Encoder hidden states ($h_j$) | Value vectors from same sequence ($v_j$) |
+| Purpose | Align encoder and decoder | Learn relationships within a sequence |
+| Architecture | Requires encoder + decoder | Standalone |
+| Type | Inter-sequence | **Intra-sequence (self)** |
 
 ## What "self" enables: within-sequence context
 
@@ -91,6 +148,8 @@ flowchart LR
         CA_Q & CA_K & CA_V --> CA_out["Output: decoder attends to encoder"]
     end
 ```
+
+Notice that cross-attention is essentially a transformer-era reincarnation of Bahdanau attention: queries from the decoder, keys and values from the encoder, same three-step formula.
 
 ## Three attention patterns in the full transformer
 
@@ -201,12 +260,22 @@ print(f"Built-in cross-attention: weights shape = {cross_weights.shape}")  # (2,
 
 A square attention matrix means self-attention. A rectangular matrix means cross-attention — the row dimension is decoder length, the column dimension is encoder length.
 
+## Interview-ready answer
+
+> "Self-attention is called *attention* because it follows the exact same three-step formulation as classical Bahdanau / Luong attention — query-key alignment, softmax normalization, weighted sum of values. It is called *self* because, unlike traditional attention which operates between two different sequences (encoder and decoder), self-attention computes attention **within a single sequence** — each element attends to every other element (including itself) in the same sequence. So it's attention where the sequence pays attention to itself."
+
 ## Interview questions
 
 <details>
 <summary>What is the precise meaning of "self" in self-attention?</summary>
 
 "Self" means queries, keys, and values are all computed from the same input sequence. The sequence attends to itself — every token can look at every other token in the same sequence. In contrast, cross-attention uses queries from one sequence (decoder) and keys/values from another (encoder). Self-attention builds within-sequence context; cross-attention bridges two sequences.
+</details>
+
+<details>
+<summary>How is self-attention related to Bahdanau attention?</summary>
+
+The three operations are identical: alignment via dot product, softmax normalization, and weighted sum of values. In Bahdanau attention, the query is the decoder hidden state $s_i$ and the keys/values are the encoder hidden states $h_j$ (both reused). In self-attention, queries, keys, and values are all linear projections of the same input sequence. So self-attention inherits the math but changes the source of Q, K, V — that's exactly why it's still called "attention" but qualified with "self".
 </details>
 
 <details>
@@ -226,10 +295,11 @@ Two: (1) masked self-attention — the decoder attends to itself causally, build
 - Calling cross-attention "self-attention" because it uses the same formula — the formula is identical but the sources of Q, K, V are different.
 - Thinking encoder self-attention is "self" because it's in the encoder — the word "self" refers to Q, K, V source, not the module name.
 - Assuming all transformers have cross-attention — decoder-only models (GPT, LLaMA) have no encoder and therefore no cross-attention.
+- Treating self-attention as a brand-new mechanism — mathematically it is the same Bahdanau formula with the source of Q, K, V swapped.
 
 ## Final takeaway
 
-"Self" in self-attention refers precisely to where Q, K, and V come from: the same sequence. A sequence attends to itself. Cross-attention is when Q comes from a different sequence than K and V. In the full transformer, encoder self-attention builds bidirectional input representations, decoder masked self-attention builds causal output representations, and decoder cross-attention bridges input and output via the encoder's memory.
+The name decomposes cleanly: "**attention**" because the three operations (align, softmax, weight-sum) are identical to classical seq2seq attention; "**self**" because Q, K, and V are all computed from the same sequence. A sequence attends to itself. Cross-attention is when Q comes from a different sequence than K and V. In the full transformer, encoder self-attention builds bidirectional input representations, decoder masked self-attention builds causal output representations, and decoder cross-attention bridges input and output via the encoder's memory.
 
 ## References
 

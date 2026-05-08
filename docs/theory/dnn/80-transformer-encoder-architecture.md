@@ -10,7 +10,27 @@ tags: [transformer, encoder, architecture, deep-learning]
 
 # Transformer encoder architecture
 
+> **TL;DR.** The encoder takes a sequence of token IDs and outputs the same number of vectors, but now each one is *context-aware* — "bank" near "river" produces a different vector than "bank" near "money." It does this by stacking N identical blocks, each containing two sublayers (multi-head self-attention + feed-forward) with residual connections and LayerNorm wrapping each. The shape `(batch, seq, d_model)` is preserved at every step; only the *content* of the vectors changes.
+
 The transformer encoder takes a sequence of tokens and produces a sequence of **contextual representations** — one vector per token that captures the meaning of that token in the context of all surrounding tokens. This is in contrast to word embeddings, which are context-free (the same word always has the same embedding).
+
+## Try it interactively
+
+- **[BertViz](https://github.com/jessevig/bertviz)** — visualize attention patterns layer by layer in BERT-style encoders running in your browser
+- **[Transformer Explainer](https://poloclub.github.io/transformer-explainer/)** — step through GPT-2's encoder-style stack (decoder-only, but the block structure is identical to the encoder)
+- **[Hugging Face BERT model card](https://huggingface.co/bert-base-uncased)** — load a real encoder and inspect intermediate hidden states with `output_hidden_states=True`
+- **[exBERT](https://exbert.net/exBERT.html)** — interactive BERT attention exploration tool
+
+## A real-world analogy
+
+Think of each encoder block as **a round of small-group discussions in a workshop**. In every round:
+
+1. Every participant briefly shares their notes with everyone else (self-attention).
+2. Each participant goes back to their desk and rewrites their notes based on what they heard (feed-forward).
+3. They keep their previous notes too, just in case (residual connection).
+4. They straighten their handwriting before the next round (LayerNorm).
+
+After several rounds, every participant's notes contain a thorough understanding of the workshop's topic — that's contextual representation.
 
 ## One-line definition
 
@@ -236,6 +256,16 @@ print(f"Output shape: {output.shape}")            # (4, 128, 768)
 print(f"Model params: {sum(p.numel() for p in encoder.parameters()):,}")
 ```
 
+### Try it yourself: experiments
+
+| Question | Try this |
+|----------|----------|
+| Does each layer add something new? | Hook into each `EncoderBlock`'s output, compute cosine similarity between layers — usually high but never 1 |
+| What if you remove the FFN? | Replace `self.ffn` with `nn.Identity()` — model loses most of its expressive capacity |
+| What if you remove residuals? | Drop `x +` in both sublayers — gradients vanish past ~6 layers |
+| Effect of d_ff ratio | Try d_ff = 2·d_model and 8·d_model on a small task — 4× is the sweet spot empirically |
+| Inspect attention | Use `model.blocks[i].attn(...)` with `need_weights=True` to extract per-head attention matrices |
+
 ## What each component contributes
 
 | Component | Role |
@@ -247,6 +277,14 @@ print(f"Model params: {sum(p.numel() for p in encoder.parameters()):,}")
 | Residual connection | Provides gradient highway; allows the block to focus on the residual |
 | Layer normalization | Keeps activations stable; speeds training |
 | Stack of $N$ blocks | Each block refines representations; deeper = more complex patterns |
+
+## Cross-references
+
+- **Prerequisite:** [77 — Multi-Head Attention](./77-multi-head-attention-in-transformers.md) — the attention sublayer used inside each block
+- **Prerequisite:** [78 — Positional Encoding](./78-positional-encoding-in-transformers.md) — how order is added to the input
+- **Prerequisite:** [79 — Layer vs Batch Normalization](./79-layer-normalization-versus-batch-normalization.md) — why LayerNorm is the right choice here
+- **Follow-up:** [83 — Transformer Decoder Architecture](./83-transformer-decoder-architecture.md) — the encoder's counterpart, with masked self-attention and cross-attention
+- **Follow-up:** [87 — BERT Encoder Pretraining](./87-bert-encoder-pretraining.md) — the most important real-world use of this exact architecture
 
 ## Interview questions
 

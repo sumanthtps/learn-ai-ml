@@ -10,7 +10,16 @@ tags: [self-attention, transformers, attention, deep-learning]
 
 # What self-attention is
 
+> **TL;DR.** Self-attention lets every token in a sequence directly "look at" every other token in one operation — no recurrence, no sequential bottleneck. Each token forms a **query** asking "who's relevant to me?", every token offers a **key** answering "here's what I am", and a **value** carrying its content. Dot-product the queries against the keys, softmax to get weights, then take a weighted average of the values. Result: a context-aware representation per token. That's the entire core of every transformer.
+
 RNNs pass information forward through a hidden state: to connect token $t$ to token $t-100$, information must travel through 100 sequential recurrence steps. Attention bypasses this bottleneck by creating a **direct connection** between any two positions in the sequence — in a single operation. Self-attention is the special case where queries, keys, and values all come from the same sequence.
+
+## Try it interactively
+
+- **[Transformer Explainer (poloclub)](https://poloclub.github.io/transformer-explainer/)** — see self-attention working in a real GPT-2 forward pass
+- **[BertViz](https://github.com/jessevig/bertviz)** — visualize attention patterns layer by layer in BERT/GPT
+- **[Jay Alammar — The Illustrated Transformer](https://jalammar.github.io/illustrated-transformer/)** — the canonical visual reference
+- **[bbycroft LLM Visualization](https://bbycroft.net/llm)** — animated 3D walkthrough of self-attention happening
 
 ## One-line definition
 

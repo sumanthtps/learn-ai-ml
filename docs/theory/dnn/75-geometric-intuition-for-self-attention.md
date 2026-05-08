@@ -10,7 +10,16 @@ tags: [self-attention, transformers, geometry, vector-space, deep-learning]
 
 # Geometric intuition for self-attention
 
+> **TL;DR.** Geometrically, attention is **directional alignment in a learned subspace**. Each token's query points toward "what I'm looking for" in vector space; each token's key points toward "what I advertise". The dot product is `‖q‖·‖k‖·cos(angle)` — high when their directions align, low when orthogonal. Softmax turns those alignments into competitive probabilities. The output for each token is a *convex combination* of all value vectors, geometrically pulled toward the values of its most-aligned neighbors. That's the picture behind every attention diagram.
+
 Formulas for attention are easy to write. The harder question is: **why does the dot product measure what tokens are relevant to each other?** This note builds the geometric picture: what queries, keys, and values represent in vector space, why similar directions produce high attention, and how learned projections reshape the similarity geometry.
+
+## Try it interactively
+
+- **[TensorFlow Embedding Projector](https://projector.tensorflow.org/)** — visualize high-dimensional vectors in 2D/3D with PCA and t-SNE; great for building geometric intuition
+- **[3Blue1Brown — But what is a transformer? (YouTube)](https://www.youtube.com/watch?v=wjZofJX0v4M)** — animated geometric explanation of attention as directional alignment
+- **[BertViz](https://github.com/jessevig/bertviz)** — see attention as visual graphs in trained models
+- **[Distill — Building Blocks of Interpretability](https://distill.pub/2018/building-blocks/)** — the conceptual home of this geometric framing
 
 ## One-line definition
 

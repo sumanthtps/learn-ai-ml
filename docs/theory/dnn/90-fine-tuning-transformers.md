@@ -10,6 +10,8 @@ tags: [fine-tuning, transfer-learning, bert, gpt, transformers, deep-learning]
 
 # Fine-tuning transformers for downstream tasks
 
+> **TL;DR.** Fine-tuning takes a model that already understands language (pretrained on billions of tokens) and *gently* nudges its weights to specialize on your task using a small labeled dataset. The recipe: low learning rate (2e-5 to 5e-5), short training (2–4 epochs), linear warmup + decay, and a task-specific head on top. With ~1k labeled examples and 30 minutes on a single GPU, you can turn a generic BERT into a domain-specific sentiment classifier or NER model that beats from-scratch baselines by a wide margin.
+
 A pre-trained transformer has learned general language representations from billions of tokens. Fine-tuning adapts these representations to a specific task by continuing training on a small labeled dataset. It is one of the most practically important skills in applied NLP — the same pre-trained BERT or GPT can be adapted to sentiment analysis, named entity recognition, question answering, or summarization in minutes with a few hundred labeled examples.
 
 ## One-line definition
@@ -22,6 +24,18 @@ Fine-tuning initializes a task-specific model from a pre-trained transformer's w
 ## Why this topic matters
 
 Almost every production NLP system today uses a fine-tuned transformer. Understanding fine-tuning explains why these models generalize from huge corpora to specialized domains, why catastrophic forgetting is a concern, and what hyperparameters matter most. It is also the foundation for understanding parameter-efficient fine-tuning (LoRA, adapters) discussed in the next note.
+
+## Try it interactively
+
+- **[Hugging Face NLP Course — Fine-tuning](https://huggingface.co/learn/nlp-course/chapter3)** — runnable Colabs that fine-tune BERT on real datasets in your browser
+- **[Hugging Face AutoTrain](https://huggingface.co/autotrain)** — no-code UI for fine-tuning a transformer on uploaded CSV
+- **[Trainer API docs](https://huggingface.co/docs/transformers/main_classes/trainer)** — official `Trainer` interface used by most production fine-tuning
+- **[Lit-GPT (Lightning)](https://github.com/Lightning-AI/litgpt)** — modern, scalable fine-tuning recipes for LLaMA-class models including LoRA
+- **[Axolotl](https://github.com/OpenAccess-AI-Collective/axolotl)** — config-driven fine-tuning toolkit popular in the open-source LLM community
+
+## A real-world analogy
+
+A pretrained transformer is a **medical school graduate**: they've absorbed an enormous textbook, can speak the language fluently, and have generally good judgment. Fine-tuning is the **residency** for a specialty (cardiology, dermatology). You don't re-teach them anatomy from scratch — you give them a *small* number of supervised cases at low intensity, and they specialize quickly. Catastrophic forgetting is what happens when residency is too aggressive: the doctor learns dermatology but forgets the rest of medicine. The recipe (low LR, warmup, few epochs) is the equivalent of "don't burn out the resident."
 
 ## The two adaptation approaches
 
@@ -301,6 +315,17 @@ print(f"\nFrozen BERT: {trainable:,} trainable / {total:,} total params")
 # Only ~1,540 parameters (head) are trainable vs 110M in full fine-tuning
 ```
 
+### Try it yourself: experiments
+
+| Question | Try this |
+|----------|----------|
+| Effect of learning rate | Train at 1e-3, 1e-4, 2e-5 — only the lowest converges nicely |
+| Skip warmup | Set `num_warmup_steps=0` — observe loss spikes / divergence in early steps |
+| Frozen vs full fine-tune | Same data, same head — full FT typically beats frozen by 5–10% accuracy |
+| Try LoRA | Use `peft` library: `LoraConfig(r=8, target_modules=["query", "value"])` — 100× fewer trainable params, similar accuracy |
+| Probe forgetting | After fine-tuning, run zero-shot fill-mask — has it lost general language ability? |
+| Layer-wise LR decay | Use lower LR on early layers (preserve general features), higher on late ones — a classic ULMFiT trick |
+
 ## Catastrophic forgetting
 
 When fine-tuning on small datasets, the model can "forget" its pre-trained knowledge as it adapts to the new task:
@@ -324,6 +349,13 @@ When fine-tuning on small datasets, the model can "forget" its pre-trained knowl
 | Zero-shot (prompt GPT) | 0 examples | Seconds | Varies |
 
 Fine-tuning is almost always the right choice for production NLP with labeled data.
+
+## Cross-references
+
+- **Prerequisite:** [85 — Training Objectives](./85-transformer-training-objectives.md) — what the model learned during pretraining
+- **Prerequisite:** [87 — BERT](./87-bert-encoder-pretraining.md), [88 — GPT](./88-gpt-decoder-only-causal-lm.md), [89 — T5](./89-t5-encoder-decoder-pretraining.md) — the models you'll most often fine-tune
+- **Related:** Parameter-efficient fine-tuning — LoRA, QLoRA, prompt tuning, adapter modules (separate notes; see [PEFT library](https://github.com/huggingface/peft))
+- **Related:** RLHF / DPO — alignment fine-tuning that turns a base LLM into a chat model (different from supervised fine-tuning)
 
 ## Interview questions
 

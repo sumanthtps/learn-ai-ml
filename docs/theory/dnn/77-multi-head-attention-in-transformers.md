@@ -10,7 +10,16 @@ tags: [multi-head-attention, transformers, attention, deep-learning]
 
 # Multi-head attention in transformers
 
+> **TL;DR.** A single attention head can only learn one "perspective" on the sentence — but language often has *multiple simultaneous structures* (syntax, coreference, semantics, position). Multi-head attention runs **h independent attention operations in parallel**, each in a smaller `d_k = d_model/h`-dim subspace, then concatenates outputs and projects back via `W_O`. With h=8 heads of dim 64 (instead of 1 head of dim 512), you get 8 perspectives at the same compute budget. That's it.
+
 Single-head self-attention computes one attention distribution per query position. Multi-head attention runs $h$ parallel attention operations in lower-dimensional subspaces, then combines their outputs. This allows the model to attend to different types of relationships simultaneously — syntactic dependencies, semantic similarity, positional proximity — in a single layer.
+
+## Try it interactively
+
+- **[BertViz Head View](https://github.com/jessevig/bertviz)** — see all 12 heads of BERT side by side, watch each one specialize on different patterns (syntax, coreference, etc.)
+- **[Transformer Explainer](https://poloclub.github.io/transformer-explainer/)** — multi-head attention is highlighted in the GPT-2 visualization
+- **[Anthropic Transformer Circuits](https://transformer-circuits.pub/)** — research on what individual attention heads actually learn
+- **[Attention Head Analysis tool](https://github.com/clarkkev/attention-analysis)** — code for analyzing emergent head specialization in BERT
 
 ## One-line definition
 

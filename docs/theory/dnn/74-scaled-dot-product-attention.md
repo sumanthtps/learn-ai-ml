@@ -10,7 +10,16 @@ tags: [attention, transformers, scaled-dot-product, deep-learning]
 
 # Scaled dot-product attention
 
+> **TL;DR.** The attention formula has one strange-looking detail: `softmax(QK^T / √d_k) V`. That `√d_k` denominator is *load-bearing*. Without it, in a 512-dim space, the dot products grow to magnitudes around 22, softmax saturates to one-hot, gradients vanish, training collapses. Dividing by `√d_k` keeps the score distribution at unit variance regardless of head dimension — and lets the same formula work from `d_k = 64` to `d_k = 8192` unchanged.
+
 The dot-product between query and key vectors is a natural measure of similarity. But in high dimensions, this dot-product grows large simply because more dimensions accumulate more signal — not because the tokens are more relevant to each other. Scaling by $\sqrt{d_k}$ corrects for this dimensional growth and prevents the softmax from saturating.
+
+## Try it interactively
+
+- **[PyTorch F.scaled_dot_product_attention](https://pytorch.org/docs/stable/generated/torch.nn.functional.scaled_dot_product_attention.html)** — production-grade implementation of the entire formula in one function call
+- **[FlashAttention demo](https://github.com/Dao-AILab/flash-attention)** — the modern fused-kernel version of this same operation, 2–4× faster
+- **[Distill — A Visual Tour of Attention](https://distill.pub/2016/augmented-rnns/)** — visual derivations of why scaling matters
+- **[Try the variance experiment](#what-is-d_k-and-why-does-it-matter)** — the Python code in this note demonstrates dot-product variance growth empirically
 
 ## One-line definition
 

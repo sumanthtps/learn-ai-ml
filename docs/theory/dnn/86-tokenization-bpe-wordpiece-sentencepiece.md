@@ -10,7 +10,27 @@ tags: [tokenization, bpe, wordpiece, sentencepiece, transformers, nlp]
 
 # Tokenization: BPE, WordPiece, and SentencePiece
 
+> **TL;DR.** Transformers don't see text — they see integers. The tokenizer is the bridge: it splits text into **subword units** (somewhere between letters and full words) and maps them to vocabulary IDs. The three main flavors are **BPE** (greedy, frequency-based — used in GPT-2/3/4, LLaMA), **WordPiece** (likelihood-based — used in BERT), and **SentencePiece** (language-agnostic framework — used in T5, mT5). The choice of tokenizer determines context-window efficiency, multilingual coverage, and even how models read code.
+
 Before a transformer sees any text, the text must be converted to integers. Tokenization — splitting text into subword units and mapping them to vocabulary IDs — is the first and often underappreciated step in every NLP pipeline. The choice of tokenizer affects vocabulary size, out-of-vocabulary handling, multilingual coverage, and even model performance.
+
+## Try it interactively
+
+- **[OpenAI Tokenizer](https://platform.openai.com/tokenizer)** — paste any text and see how GPT-3.5/4 tokenizes it (live, in the browser)
+- **[tiktokenizer.vercel.app](https://tiktokenizer.vercel.app/)** — compare GPT-3.5, GPT-4, Claude, and other tokenizers side by side on the same text
+- **[Hugging Face Tokenizers playground](https://huggingface.co/docs/tokenizers)** — official docs with runnable examples
+- **[Karpathy — Let's build the GPT Tokenizer (YouTube)](https://www.youtube.com/watch?v=zduSFxRajkE)** — implements BPE from scratch in 2 hours, explaining every quirk
+- **[OpenAI tiktoken library](https://github.com/openai/tiktoken)** — Python library for fast tokenization with all GPT tokenizers
+
+## A real-world analogy
+
+Tokenization is like **filing books in a library**. You have three options:
+
+- **Word-level**: one drawer per book title. Beautiful organization, but you need a *vast* cabinet — and any new title (a typo, a foreign word, a brand name) won't fit.
+- **Character-level**: one drawer per individual letter. Tiny cabinet, but reading a book takes 80,000 drawer trips.
+- **Subword (BPE/WordPiece)**: drawers for *common stems and endings* — "transform", "ization", "running", "##ing". Most words fit in 1–2 drawers; rare words spill into 3–4. The cabinet stays a manageable 30k–100k drawers, and *any* string can be filed (worst case, individual letters/bytes).
+
+That third strategy is what every modern transformer uses.
 
 ## One-line definition
 
@@ -243,6 +263,17 @@ print(f"[PAD] ID:  {bert_tok.pad_token_id}")   # 0
 print(f"[UNK] ID:  {bert_tok.unk_token_id}")   # 100
 ```
 
+### Try it yourself: experiments
+
+| Question | Try this |
+|----------|----------|
+| Token count by language | Encode the same sentence in English, Chinese, Hindi — Chinese & Hindi often need 2–3× more tokens |
+| Effect of vocabulary size | Compare `bert.encode(text)` vs `gpt2.encode(text)` for long text — bigger vocab uses fewer tokens |
+| Code vs prose | Tokenize a Python function and a paragraph of equal length — code often uses more tokens |
+| Whitespace handling | Compare `gpt2.tokenize("hello")` vs `gpt2.tokenize(" hello")` — leading space matters in BPE |
+| Find a token that costs many | Try `gpt2.tokenize("antidisestablishmentarianism")` — should split into many subwords |
+| OOV impossibility | Try a random Unicode emoji — byte-level BPE always tokenizes to *some* sequence (no [UNK]) |
+
 ## Tokenization trade-offs
 
 | Tokenizer | Vocab size | Multilingual? | Languages | Pros | Cons |
@@ -261,6 +292,14 @@ Context window is measured in **tokens**, not words. The same content takes diff
 - **Code**: code is often tokenized very differently from natural language
 
 For a 128k token context window, this might correspond to ~100 pages of English text or ~50 pages of Chinese text.
+
+## Cross-references
+
+- **Follow-up:** [85 — Training Objectives](./85-transformer-training-objectives.md) — what these tokens are predicted from / into
+- **Follow-up:** [87 — BERT](./87-bert-encoder-pretraining.md) — uses WordPiece
+- **Follow-up:** [88 — GPT](./88-gpt-decoder-only-causal-lm.md) — uses byte-level BPE
+- **Follow-up:** [89 — T5](./89-t5-encoder-decoder-pretraining.md) — uses SentencePiece
+- **Related:** [78 — Positional Encoding](./78-positional-encoding-in-transformers.md) — what gets added to token embeddings after tokenization
 
 ## Interview questions
 

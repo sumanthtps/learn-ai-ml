@@ -10,6 +10,15 @@ tags: [self-attention, cross-attention, transformers, attention, deep-learning]
 
 # Why self-attention is called self-attention
 
+> **TL;DR.** "Self-attention" decomposes cleanly. **"Attention"** because it follows the exact same three-step recipe as classical Bahdanau/Luong attention from 2015 (score → softmax → weighted sum). **"Self"** because Q, K, and V all come from the *same* sequence — a sequence attends to itself, rather than one sequence attending to another. Cross-attention is the contrast: Q from one sequence (decoder), K and V from another (encoder).
+
+## Try it interactively
+
+- **[Hugging Face MarianMT](https://huggingface.co/docs/transformers/model_doc/marian)** — load a translation model and inspect both self-attention (encoder & decoder) AND cross-attention in the same model
+- **[BertViz](https://github.com/jessevig/bertviz)** — visualize self vs cross-attention patterns side by side
+- **[Lena Voita — Seq2Seq with Attention](https://lena-voita.github.io/nlp_course/seq2seq_and_attention.html)** — interactive walkthrough of Bahdanau attention (the ancestor of self-attention)
+- **[Tensor2Tensor cross-attention demo](https://colab.research.google.com/github/tensorflow/tensor2tensor/)** — visualize the rectangular cross-attention matrix on translation
+
 The name has two pieces, and each carries a precise meaning:
 
 1. **Why "attention"?** — Because self-attention performs the *exact same three operations* as classical Bahdanau / Luong attention: compute query-key alignment, normalize via softmax, weight-sum the values. The mathematical machinery is identical.

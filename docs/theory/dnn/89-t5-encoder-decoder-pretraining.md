@@ -10,7 +10,21 @@ tags: [t5, bart, encoder-decoder, seq2seq, span-corruption, transformers, deep-l
 
 # T5 and encoder-decoder pre-training
 
+> **TL;DR.** T5 reframes every NLP task as **string-in, string-out**. Sentiment classification? `"sst2 sentence: I loved it"` → `"positive"`. Translation? `"translate English to French: hi"` → `"salut"`. Summarization? `"summarize: <long text>"` → `"<summary>"`. The architecture is a vanilla encoder-decoder transformer; the pretraining objective is **span corruption** (mask out chunks of text and ask the decoder to regenerate them). One model, one loss, one fine-tuning recipe — for every task.
+
 T5 (Text-to-Text Transfer Transformer) reformulated every NLP task as a seq2seq problem: classification, translation, summarization, question answering — all become "convert this input text to this output text." This unification with a single model architecture and a single training objective is what made T5 influential.
+
+## Try it interactively
+
+- **[T5 demo on HuggingFace](https://huggingface.co/google-t5/t5-base)** — paste any input with task prefix and see the generated output
+- **[FLAN-T5 demo](https://huggingface.co/google/flan-t5-large)** — instruction-tuned variant; works on natural-language prompts
+- **[BART summarization demo](https://huggingface.co/facebook/bart-large-cnn)** — encoder-decoder for abstractive summarization
+- **[mT5 multilingual demo](https://huggingface.co/google/mt5-base)** — same architecture, 101 languages
+- **[Hugging Face fine-tuning T5 tutorial](https://huggingface.co/docs/transformers/model_doc/t5)** — official guide for fine-tuning T5 on a custom seq2seq task
+
+## A real-world analogy
+
+T5 is like a **universal translator** that has been trained to convert between every variety of "language": English-to-French, "raw text" to "summary", "question + passage" to "answer", "sentence" to "sentiment label". Internally, every problem becomes the same shape — read input string, write output string — and the model uses the same encoder-decoder machinery for all of them. The task prefix is the *dialect indicator* that tells the translator which conversion to perform.
 
 ## One-line definition
 
@@ -223,6 +237,16 @@ print(f"\n=== BART Summary ===")
 print(bart_tokenizer.decode(summary_ids[0], skip_special_tokens=True))
 ```
 
+### Try it yourself: experiments
+
+| Question | Try this |
+|----------|----------|
+| What if you skip the task prefix? | Send raw text to T5 with no prefix — output is gibberish or echoes input |
+| Compare beam search vs greedy | Set `num_beams=1` vs `num_beams=4` — beam search wins on translation by 1–3 BLEU |
+| Can a single fine-tuning teach two tasks? | Train T5 on a mixed batch (translate + summarize) — emerges multi-task capability |
+| Inspect cross-attention | Pass `output_attentions=True`, plot `cross_attentions[0][0]` heatmap |
+| FLAN-T5 vs T5 zero-shot | Same instruction-style prompt to both — FLAN-T5 follows it; vanilla T5 doesn't |
+
 ## T5 vs. BERT vs. GPT
 
 | Property | T5 | BERT | GPT |
@@ -247,6 +271,15 @@ Output: "negative"
 ```
 
 FLAN-T5 follows instructions zero-shot far better than vanilla T5 — the key insight is that fine-tuning on many tasks in instruction format improves generalization to new tasks.
+
+## Cross-references
+
+- **Prerequisite:** [82 — Cross-Attention](./82-cross-attention-in-transformers.md) — what bridges T5's encoder and decoder
+- **Prerequisite:** [83 — Decoder Architecture](./83-transformer-decoder-architecture.md) — the 3-sublayer decoder T5 uses
+- **Prerequisite:** [85 — Training Objectives (Span Corruption)](./85-transformer-training-objectives.md) — T5's pretraining objective
+- **Prerequisite:** [86 — Tokenization](./86-tokenization-bpe-wordpiece-sentencepiece.md) — T5 uses SentencePiece
+- **Related:** [87 — BERT (Encoder-Only)](./87-bert-encoder-pretraining.md), [88 — GPT (Decoder-Only)](./88-gpt-decoder-only-causal-lm.md) — the other two paradigms
+- **Follow-up:** [90 — Fine-Tuning](./90-fine-tuning-transformers.md) — adapting T5 to new tasks via the text-to-text format
 
 ## Interview questions
 

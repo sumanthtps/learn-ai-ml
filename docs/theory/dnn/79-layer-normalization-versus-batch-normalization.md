@@ -10,7 +10,25 @@ tags: [layer-normalization, batch-normalization, normalization, transformers, de
 
 # Layer normalization versus batch normalization
 
+> **TL;DR.** BatchNorm and LayerNorm both rescale activations to mean 0, std 1 — but they differ in **which axis they average over**. BatchNorm averages across the batch (good for CNNs, where each image is a fixed-size i.i.d. sample). LayerNorm averages across features within a single sample (good for transformers, where sequences have variable length and inference often runs at batch size 1). The single-axis difference is what makes LayerNorm the right choice for every modern LLM.
+
 Batch normalization (note 31) was the normalization standard for CNNs. Transformers use layer normalization instead. The difference is a single axis: where the mean and variance are computed. That axis change has profound practical consequences for variable-length sequences, small batches, and autoregressive generation.
+
+## Try it interactively
+
+- **[Distill — Feature visualization](https://distill.pub/2017/feature-visualization/)** — see what normalization does to feature distributions
+- **[PyTorch nn.LayerNorm docs](https://pytorch.org/docs/stable/generated/torch.nn.LayerNorm.html)** — official walkthrough with shape examples
+- **[Yannic Kilcher — Layer Normalization explained (YouTube)](https://www.youtube.com/results?search_query=yannic+kilcher+layer+normalization)** — visual derivation of the differences
+- **[Karpathy — makemore (Part 3, BatchNorm)](https://www.youtube.com/watch?v=P6sfmUTpUmc)** — Andrej walks through BatchNorm and its failure modes in detail; LayerNorm follows naturally
+
+## A real-world analogy
+
+Imagine you and 31 classmates take a test. Two ways to "normalize" your scores:
+
+- **BatchNorm**: For each *question*, compute the class average and standard deviation, then z-score everyone's answer for that question. Your normalized score for Q3 depends on how the rest of the class did on Q3.
+- **LayerNorm**: For each *student*, compute their personal mean and standard deviation across all questions, then z-score their own answers. Your normalized scores depend only on your own paper.
+
+LayerNorm is what you want when (a) sometimes only one student takes the test (batch size 1 at inference), (b) different students answer different numbers of questions (variable-length sequences), or (c) you don't trust the rest of the class to be a representative sample.
 
 ## One-line definition
 
@@ -215,6 +233,16 @@ out = block(x)
 print(f"\nTransformer block output: {out.shape}")   # (4, 20, 512)
 ```
 
+### Try it yourself: experiments
+
+| Question | Try this |
+|----------|----------|
+| What does BatchNorm fail at batch=1 in train mode? | `nn.BatchNorm1d(8); bn.train(); bn(torch.randn(1, 8))` — produces NaN or zeros |
+| Does LayerNorm change with batch size? | Run LayerNorm on the same vector with different batch sizes; output is identical for that vector |
+| RMSNorm vs LayerNorm | Implement `x / torch.sqrt(x.pow(2).mean(-1, keepdim=True) + eps) * gamma`; check it's roughly equivalent |
+| Pre-norm vs post-norm gradient | Compute `torch.autograd.grad` through both — pre-norm gradients are noticeably larger at deep stacks |
+| What if epsilon is too small? | Set `eps=0` and feed an all-zero input — division by zero blows up |
+
 ## RMSNorm: a simpler LayerNorm variant
 
 Used in LLaMA, Mistral, Gemma:
@@ -224,6 +252,13 @@ $$
 $$
 
 RMSNorm removes the mean subtraction, keeping only the RMS (root mean square) normalization. Empirically matches LayerNorm performance at lower computational cost.
+
+## Cross-references
+
+- **Prerequisite:** [31 — Batch Normalization](./31-batch-normalization.md) — the original normalization technique LayerNorm replaces in transformers
+- **Follow-up:** [80 — Transformer Encoder Architecture](./80-transformer-encoder-architecture.md) — where LayerNorm sits in each block (pre-norm vs post-norm)
+- **Follow-up:** [83 — Transformer Decoder Architecture](./83-transformer-decoder-architecture.md) — the same Add & Norm pattern in the decoder
+- **Related:** Modern LLMs (LLaMA, Mistral, Gemma) use **RMSNorm** — see the section above for the simplified variant
 
 ## Interview questions
 

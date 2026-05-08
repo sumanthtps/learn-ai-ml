@@ -10,7 +10,20 @@ tags: [cross-attention, encoder-decoder, transformers, seq2seq, deep-learning]
 
 # Cross-attention in transformers
 
+> **TL;DR.** Self-attention has Q, K, V all coming from the same sequence. Cross-attention has Q coming from the **decoder** and K, V coming from the **encoder** — that's the only difference. It's how the decoder asks the encoder, "of all the source tokens you encoded, which ones matter for the word I'm generating right now?" The resulting score matrix is **rectangular** (target_len × source_len), and the encoder output is computed once and reused at every decoder layer.
+
 In a seq2seq transformer (translation, summarization, question answering), the encoder builds a complete representation of the input and the decoder generates the output. Cross-attention is the bridge: at each decoder layer, it lets the decoder query the encoder's output to selectively retrieve relevant source information for each generated token.
+
+## Try it interactively
+
+- **[Tensor2Tensor visualization Colab](https://colab.research.google.com/github/tensorflow/tensor2tensor/blob/master/tensor2tensor/notebooks/hello_t2t.ipynb)** — visualize cross-attention alignment heatmaps in a real translation model
+- **[Hugging Face MarianMT](https://huggingface.co/docs/transformers/model_doc/marian)** — load a translation model and access `output_attentions=True` to inspect cross-attention weights
+- **[BertViz](https://github.com/jessevig/bertviz)** — visualize cross-attention in T5 / BART
+- **[BART summarization demo](https://huggingface.co/facebook/bart-large-cnn)** — try summarization (a perfect cross-attention use case) in your browser
+
+## A real-world analogy
+
+Imagine you're writing the **subtitle for a foreign film** in real time. The encoder is the team that watched the original (it has read the whole script and produced a rich set of "scene notes"). The decoder is you, typing the subtitles one word at a time. As you write each word, you don't re-read the whole script — you point at one or two scene notes that are most relevant *right now* and base your word on them. That pointing-and-querying is cross-attention. The decoder's question changes every word; the encoder's notes stay the same.
 
 ## One-line definition
 
@@ -250,6 +263,16 @@ print(f"\nPyTorch built-in cross-attn: {cross_out.shape}")  # (2, 7, 64)
 print(f"Weight matrix shape:         {cross_weights.shape}") # (2, 7, 10)
 ```
 
+### Try it yourself: experiments
+
+| Question | Try this |
+|----------|----------|
+| Visualize the alignment | After training a tiny translation model, `plt.imshow(attn_weights[0].detach())` — diagonal-ish alignment |
+| Effect of source length on memory | Time the forward pass for src_len in `[10, 100, 1000]` — linear in src_len for cross-attention |
+| What if you swap Q and K/V sources? | Use encoder for Q and decoder for K/V — model can no longer translate |
+| Caching K, V at inference | Precompute `K = encoder_out @ W_K, V = encoder_out @ W_V` once per source — same answer, much faster |
+| Ablation: skip cross-attention | Set its output to zero — model degrades to "language model that ignores the source" |
+
 ## Cross-attention vs. self-attention: key differences
 
 | Property | Self-attention | Cross-attention |
@@ -263,6 +286,14 @@ print(f"Weight matrix shape:         {cross_weights.shape}") # (2, 7, 10)
 ## Why cross-attention doesn't use a causal mask
 
 The source sequence is already complete and fixed when decoding begins. There is no notion of "future source tokens" — the entire source is known. Each decoder position should be free to attend to any source position to find the most relevant information. Masking source positions would only hurt the quality of information retrieval.
+
+## Cross-references
+
+- **Prerequisite:** [69 — Attention for Seq2Seq](./69-attention-mechanism-for-seq2seq-models.md) — Bahdanau attention, the conceptual ancestor
+- **Prerequisite:** [76 — Why Self-Attention](./76-why-self-attention-is-called-self-attention.md) — comparison of self vs cross
+- **Prerequisite:** [81 — Masked Self-Attention](./81-masked-self-attention-in-the-transformer-decoder.md) — the *first* attention sublayer in each decoder block
+- **Follow-up:** [83 — Transformer Decoder Architecture](./83-transformer-decoder-architecture.md) — where this fits in the full decoder
+- **Follow-up:** [89 — T5 Encoder-Decoder Pretraining](./89-t5-encoder-decoder-pretraining.md) — the most prominent modern use of cross-attention
 
 ## Interview questions
 

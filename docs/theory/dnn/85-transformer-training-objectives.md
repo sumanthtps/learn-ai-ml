@@ -10,7 +10,25 @@ tags: [pre-training, masked-lm, causal-lm, span-corruption, transformers, deep-l
 
 # Transformer training objectives
 
+> **TL;DR.** Transformers learn from raw text by *hiding* part of it and predicting what was hidden. Three flavors dominate: **MLM** hides ~15% of random tokens and predicts them with bidirectional context (BERT, encoder-only). **CLM** predicts the next token from everything to the left (GPT, decoder-only). **Span corruption** hides contiguous *chunks* and asks an encoder-decoder model to regenerate them (T5). The objective is what *defines* the architecture — change the objective, change the model.
+
 Transformers learn from unlabeled text by predicting parts of the text that have been hidden. The choice of what to hide and how to predict it defines the **training objective** — and this choice determines the architecture, the type of representations learned, and what downstream tasks the model is suited for.
+
+## Try it interactively
+
+- **[Hugging Face Fill-Mask widget](https://huggingface.co/bert-base-uncased)** — feed `"The [MASK] sat on the mat"` to a real BERT and see top-5 predictions
+- **[OpenAI Tokenizer](https://platform.openai.com/tokenizer)** — see how GPT splits text and predicts the next token
+- **[T5 demo](https://huggingface.co/google-t5/t5-base)** — try span infilling on text in your browser
+- **[Karpathy — Let's build GPT (YouTube)](https://www.youtube.com/watch?v=kCc8FmEb1nY)** — implements the CLM training loop from scratch
+- **[BertViz Fill-Mask](https://github.com/jessevig/bertviz)** — visualize which tokens BERT looks at when predicting a masked one
+
+## A real-world analogy
+
+Three different ways to learn a language by playing **fill-in-the-blank**:
+
+- **MLM (BERT)**: A teacher gives you a sentence with random *single words* hidden (`"The ___ sat on the ___"`). You can read everything before AND after each blank, then guess. You learn rich understanding because every blank gives you full surrounding context.
+- **CLM (GPT)**: The teacher reveals the sentence one word at a time, asking you to predict the next one each time. You only ever see what came before. You learn to *generate* — you have to know what plausibly comes next, which is exactly what a writer does.
+- **Span corruption (T5)**: The teacher hides whole *phrases* (`"The ___ on the ___"`) and asks you to fill in each phrase. You see everything around the blanks bidirectionally (encoder), then write out the full missing chunks (decoder). It's a hybrid: understand globally, generate locally.
 
 ## One-line definition
 
@@ -287,6 +305,16 @@ print(f"Target:   {tgt}")
 # Target reconstructs the original spans
 ```
 
+### Try it yourself: experiments
+
+| Question | Try this |
+|----------|----------|
+| What if mask probability is 50% instead of 15%? | Set `mask_prob=0.5` — too few unmasked tokens to give context; loss plateaus higher |
+| Skip the 80/10/10 strategy | Replace all masked tokens with `[MASK]` only — model learns the artifact and degrades on real text |
+| CLM perplexity on different model sizes | Run the same loss on a GPT-2 (124M) and DistilGPT-2 (82M) — bigger model usually has lower perplexity |
+| Span corruption with mean span = 1 | Set `mean_span_length=1.0` — degenerates to token-level masking, similar to MLM |
+| Compare gradient signal density | Print `(labels != -100).float().mean()` for MLM (~15%) vs CLM (~100%) on the same batch |
+
 ## Which objective to use?
 
 | Task | Best pre-training | Model family |
@@ -299,6 +327,15 @@ print(f"Target:   {tgt}")
 | Translation | Span corruption / seq2seq | T5, BART, mT5 |
 | Summarization | CLM or span corruption | GPT-4, T5 |
 | Code generation | CLM | Codex, Code Llama |
+
+## Cross-references
+
+- **Prerequisite:** [80 — Encoder Architecture](./80-transformer-encoder-architecture.md) — what MLM trains
+- **Prerequisite:** [83 — Decoder Architecture](./83-transformer-decoder-architecture.md) — what CLM and span corruption train
+- **Follow-up:** [86 — Tokenization](./86-tokenization-bpe-wordpiece-sentencepiece.md) — what tokens these objectives operate on
+- **Follow-up:** [87 — BERT Pretraining](./87-bert-encoder-pretraining.md) — MLM in production detail
+- **Follow-up:** [88 — GPT Pretraining](./88-gpt-decoder-only-causal-lm.md) — CLM in production detail
+- **Follow-up:** [89 — T5 Pretraining](./89-t5-encoder-decoder-pretraining.md) — span corruption in production detail
 
 ## Interview questions
 

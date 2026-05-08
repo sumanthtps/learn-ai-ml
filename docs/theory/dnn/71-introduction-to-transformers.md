@@ -10,7 +10,25 @@ tags: [transformers, attention, deep-learning, architecture, nlp]
 
 # Introduction to transformers
 
+> **TL;DR.** A transformer is what you get when you delete every LSTM/RNN cell and replace them with one operation: **attention** between every pair of tokens. The result is a model where (1) every position can talk to every other position in one step, (2) all positions are computed in parallel (GPUs love this), and (3) scaling up just means more layers and bigger matrices — no recurrent bottleneck. Vaswani et al. (2017) called this "Attention is All You Need", and it now powers every major LLM (GPT, BERT, LLaMA, Claude, Gemini).
+
 The transformer architecture (Vaswani et al., 2017) is the foundation of every modern large language model. It replaced RNNs not by improving them incrementally but by discarding recurrence entirely and replacing it with a mechanism — attention — that processes the whole sequence in parallel.
+
+## Try it interactively
+
+Before reading the math, see a transformer in motion:
+
+- **[Transformer Explainer (poloclub)](https://poloclub.github.io/transformer-explainer/)** — step through a real GPT-2 forward pass in your browser, with token embeddings, attention heads, and logits all visible
+- **[bbycroft LLM Visualization](https://bbycroft.net/llm)** — animated 3D walkthrough of a tiny transformer at every step
+- **[Jay Alammar — The Illustrated Transformer](https://jalammar.github.io/illustrated-transformer/)** — the canonical visual reference for the architecture
+- **[nanoGPT (Karpathy)](https://github.com/karpathy/nanoGPT)** — train a tiny GPT on Shakespeare in ~30 minutes, then read the 300-line implementation
+- **[Hugging Face transformers tour](https://huggingface.co/docs/transformers/quicktour)** — load and run pretrained transformers in 3 lines of Python
+
+## A real-world analogy
+
+A transformer is like a **panel discussion at a conference**. Each token is a participant. Every speaker (token) listens to all the others simultaneously, asks each one a question (the *query*), notes how relevant their answer is (the *key/value* dot product), and updates their own notes by averaging the helpful responses, weighted by relevance. Then the panel passes those updated notes to the next round (the next layer). After several rounds, every participant's notes contain a rich understanding of the entire discussion.
+
+Compare to an RNN: the same conversation, but participants speak one at a time, and each can only consult the running summary that the previous speaker handed them. The first speaker's contribution gets diluted with each handoff.
 
 ## One-line definition
 
@@ -267,6 +285,16 @@ print(f"Output shape: {output.shape}")           # (4, 20, 512) — same shape, 
 print(f"Params: {sum(p.numel() for p in encoder.parameters()):,}")
 ```
 
+### Try it yourself: experiments
+
+| Question | Try this |
+|----------|----------|
+| What does each layer add? | Save `output` after every layer (use `nn.TransformerEncoder` with `enable_nested_tensor=False` and access submodules); compare token vectors |
+| Effect of more heads? | Re-run with `nhead=1` vs `nhead=8` — observe loss curves on a small task |
+| What if you skip positional embeddings? | Drop `pos_emb(positions)` from the input — the model becomes order-blind (a bag of tokens) |
+| Pre-norm vs post-norm? | Toggle `norm_first=True/False` — pre-norm trains more stably for deep stacks |
+| Compare to an RNN baseline | Replace `TransformerEncoder` with `nn.LSTM(d_model, d_model)` on the same task — measure speed & accuracy |
+
 ## The transformer in one paragraph
 
 A transformer takes a sequence of token IDs, converts them to embeddings, adds positional information, and passes them through $N$ identical blocks. Each block has two sublayers: multi-head self-attention (which routes information between tokens based on content) and a feed-forward network (which transforms each token's representation independently). Each sublayer is wrapped with a residual connection and layer normalization. After $N$ blocks, the model has produced one contextual vector per token — the same shape as the input, but now each vector encodes the meaning of that token in the context of the whole sequence.
@@ -332,6 +360,16 @@ Transformers now span text, images, audio, video, protein sequences, and sensor 
 - **Interpretability:** Moving from black-box to white-box — understanding *why* outputs are produced, critical for regulated industries.
 - **Multilingual coverage:** Most pre-training data is English; regional-language transformers (e.g., for Hindi and other Indian languages) are an active research and product area.
 - **Responsible development:** Techniques to audit and reduce bias, address data-provenance concerns, and improve energy efficiency.
+
+## Cross-references
+
+- **Prerequisite:** [67 — LLM History](./67-the-history-of-large-language-models-from-lstms-to-chatgpt.md) — why we needed transformers in the first place
+- **Prerequisite:** [69 — Attention for Seq2Seq](./69-attention-mechanism-for-seq2seq-models.md) — the precursor mechanism
+- **Follow-up:** [72 — What Self-Attention Is](./72-what-self-attention-is.md) — the core operation explained from scratch
+- **Follow-up:** [77 — Multi-Head Attention](./77-multi-head-attention-in-transformers.md) — how the parallel heads work
+- **Follow-up:** [78 — Positional Encoding](./78-positional-encoding-in-transformers.md) — what fixes the order-agnostic problem
+- **Follow-up:** [80 — Encoder Architecture](./80-transformer-encoder-architecture.md) and [83 — Decoder Architecture](./83-transformer-decoder-architecture.md)
+- **Follow-up:** [87 — BERT](./87-bert-encoder-pretraining.md), [88 — GPT](./88-gpt-decoder-only-causal-lm.md), [89 — T5](./89-t5-encoder-decoder-pretraining.md) — the three pretraining recipes built on this architecture
 
 ## Interview questions
 

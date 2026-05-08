@@ -10,6 +10,8 @@ tags: [attention, seq2seq, bahdanau, encoder-decoder, deep-learning]
 
 # Attention Mechanism for Seq2Seq Models
 
+> **TL;DR.** Plain seq2seq forces the decoder to translate using only one summary vector of the entire source sentence. Attention lets the decoder *peek back* at every encoder state at every step and dynamically build a fresh context vector tuned to the word it's generating right now. Three operations: **score → normalize → weighted sum.** That's the same recipe transformers use today.
+
 The attention mechanism, introduced by Bahdanau et al. (2015), was a watershed moment in NLP. Instead of forcing the decoder to work from a single compressed vector, attention lets the decoder **look back** at every encoder hidden state and dynamically assemble a context vector tuned to the current generation step. This one change dramatically improved translation quality for long sentences and laid the conceptual groundwork for the transformer.
 
 ## One-line definition
@@ -19,15 +21,24 @@ At each decoder step $i$, attention computes alignment scores between the curren
 ![Seq2Seq attention mechanism — each decoder step gets its own context vector built as a weighted combination of all encoder hidden states, with the brightest cells showing highest attention weight](https://commons.wikimedia.org/wiki/Special:Redirect/file/Seq2seq_RNN_encoder-decoder_with_attention_mechanism,_detailed_view,_training_and_inferring.png)
 *Source: [Wikimedia Commons — Seq2seq with attention](https://commons.wikimedia.org/wiki/File:Seq2seq_RNN_encoder-decoder_with_attention_mechanism,_detailed_view,_training_and_inferring.png) (CC BY-SA 4.0)*
 
+## Try it interactively
+
+- **[distill.pub — Attention and Augmented RNNs](https://distill.pub/2016/augmented-rnns/)** — beautifully animated explanation of attention with interactive visualizations
+- **[Lena Voita — Seq2Seq with Attention](https://lena-voita.github.io/nlp_course/seq2seq_and_attention.html)** — step-through animations showing how the context vector forms each step
+- **[BertViz](https://github.com/jessevig/bertviz)** — visualize attention patterns in trained models (works for transformer attention; conceptually equivalent)
+- **[TensorFlow NMT tutorial](https://www.tensorflow.org/text/tutorials/nmt_with_attention)** — train a Bahdanau-attention seq2seq model on Spanish→English in a Colab and inspect the alignment matrix
+
+## A real-world analogy
+
+In the previous lesson the encoder-decoder was an interpreter who couldn't take notes. **Attention is the same interpreter, now allowed to keep the source sentence open in front of them and underline a few words at a time** as they speak each output word. Different output words underline different source words. Translating "I went to the store" → "Je suis allé au magasin": when producing "magasin", the interpreter underlines "store"; when producing "Je", they underline "I". The note-taking is no longer compressed; it's a soft pointer back to the original.
+
 ## The problem attention solves
 
 Standard encoder-decoder models compress an entire input sentence into a single fixed-length vector before the decoder sees anything. This creates two concrete failure modes:
 
 **Problem 1 — Information bottleneck.** A 50-word sentence carries far more information than a single fixed-size vector can hold. The encoder is forced to discard or blur details, and translation quality degrades sharply for sentences longer than ~25 words.
 
-**Problem 2 — Static representation.** The decoder receives the *same* context vector at every step, even though each output word depends on different parts of the input. To translate the Hindi word "बंद" (for "turn off"), the decoder needs to focus on "turn" and "off"—not the entire sentence. But the fixed vector forces it to drag the full sentence along at every step.
-
-**The human analogy:** When translating a sentence, you don't memorize the whole thing and then produce output blindly. Your eyes and brain focus on an *attention region*—a few relevant words—and that focus shifts as you move forward. Attention gives the model the same ability.
+**Problem 2 — Static representation.** The decoder receives the *same* context vector at every step, even though each output word depends on different parts of the input. To translate the Hindi word "बंद" (for "turn off"), the decoder needs to focus on "turn" and "off" — not the entire sentence. But the fixed vector forces it to drag the full sentence along at every step.
 
 ## Why this topic matters
 
@@ -55,7 +66,7 @@ Normalize scores over all source positions with softmax:
 
 $$\alpha_{ij} = \frac{\exp(e_{ij})}{\sum_{k=1}^{T_x} \exp(e_{ik})}$$
 
-The weights $\alpha_{ij} \geq 0$ and $\sum_j \alpha_{ij} = 1$. They form a probability distribution over source positions—a soft alignment.
+The weights $\alpha_{ij} \geq 0$ and $\sum_j \alpha_{ij} = 1$. They form a probability distribution over source positions — a soft alignment.
 
 ### Step 3 — Context vector
 
@@ -73,11 +84,12 @@ Encoder states: $h_1$ ("turn"), $h_2$ ("off"), $h_3$ ("the"), $h_4$ ("light").
 
 When generating the second output word "बंद" at decoder step $i=2$:
 
-1. We have $s_1$ (the decoder state after generating "लाइट").
-2. Score each encoder state against $s_1$: the alignment model assigns high scores to $h_1$ and $h_2$ because "turn off" is what "बंद" corresponds to.
-3. After softmax: $\alpha_{21} \approx 0.45$, $\alpha_{22} \approx 0.45$, $\alpha_{23} \approx 0.05$, $\alpha_{24} \approx 0.05$.
-4. Context vector: $\mathbf{c}_2 = 0.45\,h_1 + 0.45\,h_2 + 0.05\,h_3 + 0.05\,h_4$ — mostly "turn" and "off".
-5. Decoder inputs for this step: $y_1$ ("लाइट"), $s_1$, and $\mathbf{c}_2$ → outputs "बंद".
+| Step | Operation | Output |
+|------|-----------|--------|
+| 1 | Score each encoder state against $s_1$ | $e_{21}, e_{22}$ high (for "turn", "off"); $e_{23}, e_{24}$ low |
+| 2 | Softmax over scores | $\alpha_{21} \approx 0.45,\ \alpha_{22} \approx 0.45,\ \alpha_{23} \approx 0.05,\ \alpha_{24} \approx 0.05$ |
+| 3 | Weighted sum | $\mathbf{c}_2 = 0.45\,h_1 + 0.45\,h_2 + 0.05\,h_3 + 0.05\,h_4$ |
+| 4 | Decode | Combine $y_1$, $s_1$, $\mathbf{c}_2$ → output "बंद" |
 
 The model learned this focus entirely through backpropagation — no manual alignment was specified.
 
@@ -115,6 +127,17 @@ flowchart TB
 **BLEU score vs. sentence length.** The original Bahdanau paper plots translation quality (BLEU) against source sentence length. Non-attention models degrade sharply beyond ~30 words as the fixed vector saturates. Attention-based models stay flat — the decoder can always retrieve relevant encoder states regardless of sentence length.
 
 **Attention weight visualization.** Stacking all $\alpha_{ij}$ into a matrix (output positions × input positions) produces a heatmap. For an English→French pair like "European Economic Area" → "zone économique européenne", the bright cells appear near-diagonally but reordered — "European" aligns with "européenne", "Economic" with "économique", etc. This visualization is interpretable proof that the model learned meaningful alignments without any explicit supervision.
+
+```
+Source:    European  Economic  Area
+Target:    zone      économique  européenne
+                                ▲           ▲           ▲
+        attention[zone]      attn[éco.]    attn[eur.]
+        ≈ peak on "Area"     ≈ peak on     ≈ peak on
+                              "Economic"    "European"
+```
+
+The output reorders the words; the attention matrix shows non-diagonal alignments — exactly what a translator would do.
 
 ## PyTorch example
 
@@ -156,14 +179,33 @@ s_prev         = torch.randn(BATCH, 1, HIDDEN)
 context, weights = attn(s_prev, encoder_states)
 print(context.shape)  # (4, 256)  — step-specific context vector
 print(weights.shape)  # (4, 10)   — soft alignment over source tokens
+
+# Verify weights sum to 1 (proper probability distribution)
+print(weights.sum(dim=1))   # ≈ tensor([1., 1., 1., 1.])
 ```
+
+### Try it yourself: experiments
+
+| Question | Try this |
+|----------|----------|
+| What if scores are all equal? | Set encoder_states to all-zeros → uniform weights ($\alpha = 1/T_x$) → context = mean |
+| What if one score dominates? | Multiply one row of encoder_states by 100 → softmax becomes near one-hot |
+| Plot the attention heatmap | Save weights from each decoder step, stack into a matrix, `plt.imshow(weights_matrix)` |
+| Replace additive with dot-product | Try `energy = (s_prev * encoder_states).sum(-1)` — the Luong variant (next note) |
+
+## Cross-references
+
+- **Prerequisite:** [68 — Encoder-Decoder Architecture](./68-encoder-decoder-and-sequence-to-sequence-architecture.md) — the bottleneck this attention solves
+- **Follow-up:** [70 — Bahdanau vs Luong Attention](./70-bahdanau-attention-versus-luong-attention.md) — the dot-product alternative
+- **Follow-up:** [72 — What Self-Attention Is](./72-what-self-attention-is.md) — the same recipe applied to a single sequence
+- **Follow-up:** [82 — Cross-Attention in Transformers](./82-cross-attention-in-transformers.md) — the modern transformer descendant of seq2seq attention
 
 ## Interview questions
 
 <details>
 <summary>How does attention solve the bottleneck problem?</summary>
 
-Instead of using a single fixed context vector for the entire decoding process, attention computes a fresh context vector $\mathbf{c}_i$ at each decoder step as a weighted sum of all encoder hidden states. The weights focus on the source positions most relevant to the current generation step, so no information is permanently discarded—the decoder can retrieve any part of the source sequence on demand.
+Instead of using a single fixed context vector for the entire decoding process, attention computes a fresh context vector $\mathbf{c}_i$ at each decoder step as a weighted sum of all encoder hidden states. The weights focus on the source positions most relevant to the current generation step, so no information is permanently discarded — the decoder can retrieve any part of the source sequence on demand.
 </details>
 
 <details>
@@ -184,24 +226,32 @@ Soft attention takes a weighted average (convex combination) of all encoder stat
 For each of the $T_y$ decoder steps, the alignment function must score all $T_x$ encoder states. The dominant cost is the matrix operations inside the alignment function: $O(T_x \cdot T_y \cdot d)$ where $d$ is the hidden dimension. This quadratic dependence on sequence lengths is also a property of transformer self-attention.
 </details>
 
+<details>
+<summary>Why is the alignment matrix interpretable when nothing told the model what "alignment" means?</summary>
+
+The attention weights are an emergent byproduct of training: the only supervision signal is target-token loss. The model is free to choose any way to combine encoder states. Empirically it learns to put high weight on source tokens that are translation-aligned because that's what reduces the loss most efficiently. Crisp, interpretable alignments are not enforced — they happen to be the optimal solution for human-aligned languages.
+</details>
+
 ## Common mistakes
 
 - Forgetting that attention weights are computed fresh at **every** decoder step, not once.
 - Mixing up alignment scores $e_{ij}$ (unnormalized, any real value) with attention weights $\alpha_{ij}$ (normalized, in $[0,1]$).
-- Assuming attention replaces the decoder's recurrent hidden state—it supplements it with a richer context vector.
+- Assuming attention replaces the decoder's recurrent hidden state — it supplements it with a richer context vector.
 - Using dot-product attention without scaling when hidden dimensions are large (this is the motivation for scaled dot-product attention in transformers).
+- Treating attention as an "add-on" rather than the architectural insight it is — it's the seed of the entire transformer family.
 
 ## Advanced perspective
 
 The original Bahdanau paper uses a **bidirectional LSTM** as the encoder. Each encoder hidden state $h_j$ is the concatenation of a forward and backward LSTM state, giving the model both past and future context for every source word. This produces richer $h_j$ vectors for the alignment model to score, but the attention computation itself is identical regardless of encoder architecture.
 
-Bahdanau's additive attention requires separate learned matrices $W_1, W_2, \mathbf{v}$, making it parameter-heavy compared to Luong's multiplicative variants introduced the following year. From the transformer's perspective, attention in seq2seq models is a form of **cross-attention**: queries come from the decoder state and keys/values come from the encoder. The transformer generalizes this by using attention in three distinct modes—encoder self-attention, decoder masked self-attention, and encoder-decoder cross-attention—but the core $\text{softmax}(\text{score}) \cdot V$ computation is identical.
+Bahdanau's additive attention requires separate learned matrices $W_1, W_2, \mathbf{v}$, making it parameter-heavy compared to Luong's multiplicative variants introduced the following year. From the transformer's perspective, attention in seq2seq models is a form of **cross-attention**: queries come from the decoder state and keys/values come from the encoder. The transformer generalizes this by using attention in three distinct modes — encoder self-attention, decoder masked self-attention, and encoder-decoder cross-attention — but the core $\text{softmax}(\text{score}) \cdot V$ computation is identical.
 
 ## Final takeaway
 
-Seq2Seq attention is the bridge between the fixed-bottleneck era and the attention-everywhere transformer era. The key insight—compute a dynamic, content-based context vector at each generation step—is the same insight that drives multi-head self-attention in modern LLMs. Understanding the three steps (score → normalize → aggregate) makes every subsequent attention variant immediately recognizable.
+Seq2Seq attention is the bridge between the fixed-bottleneck era and the attention-everywhere transformer era. The key insight — compute a dynamic, content-based context vector at each generation step — is the same insight that drives multi-head self-attention in modern LLMs. Understanding the three steps (score → normalize → aggregate) makes every subsequent attention variant immediately recognizable.
 
 ## References
 
 - Bahdanau, D., Cho, K., & Bengio, Y. (2015). *Neural Machine Translation by Jointly Learning to Align and Translate*. ICLR.
 - Cho, K., et al. (2014). *Learning Phrase Representations using RNN Encoder-Decoder*. EMNLP.
+- Olah, C., & Carter, S. (2016). *Attention and Augmented Recurrent Neural Networks*. [distill.pub](https://distill.pub/2016/augmented-rnns/).

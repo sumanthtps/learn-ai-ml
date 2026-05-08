@@ -10,11 +10,29 @@ tags: [attention, bahdanau, luong, seq2seq, additive-attention, dot-product-atte
 
 # Bahdanau attention versus Luong attention
 
+> **TL;DR.** Both Bahdanau (2015) and Luong (2015) computed attention by scoring decoder–encoder pairs, softmax-ing, and weighted-summing — same recipe. They differ in *how* they score: **Bahdanau uses a small MLP** (additive); **Luong uses a dot product** (multiplicative). Bahdanau scores using the *previous* decoder state and feeds the context *into* the next step ("pre-attention"); Luong scores using the *current* decoder state and uses the context *after* ("post-attention"). Luong's dot-product is the direct ancestor of transformer attention.
+
 The attention mechanism that transformed sequence-to-sequence models came in two primary forms: the original Bahdanau (additive) attention (2015) and the simpler Luong (multiplicative) attention (2015). Both allow the decoder to query the encoder's hidden states at every step, but they differ in how the relevance score is computed. Understanding both is important because Luong's dot-product scoring is the direct precursor to transformer self-attention.
 
 ## One-line definition
 
 Bahdanau attention uses a small feed-forward network to compute alignment scores (additive); Luong attention uses dot products between the decoder hidden state and encoder hidden states (multiplicative). Both produce a weighted context vector at each decoding step.
+
+## Try it interactively
+
+- **[Lena Voita — Seq2Seq with Attention](https://lena-voita.github.io/nlp_course/seq2seq_and_attention.html)** — interactive comparison of additive vs multiplicative scoring with animated examples
+- **[Hugging Face Tasks — Translation](https://huggingface.co/tasks/translation)** — try modern translation models that descend from these mechanisms
+- **[TensorFlow NMT tutorial](https://www.tensorflow.org/text/tutorials/nmt_with_attention)** — implements Bahdanau attention end-to-end and visualizes the alignment matrix
+- **[Karpathy's nanoGPT](https://github.com/karpathy/nanoGPT)** — for the dot-product descendants of Luong's idea, applied to language modeling
+
+## A quick analogy
+
+Imagine you're rating how relevant each source word is to the word you're about to generate.
+
+- **Bahdanau (additive):** you have a *judge* (a learned MLP) that takes both vectors as input and outputs a single score. More flexible, but you have to train the judge.
+- **Luong (multiplicative):** you measure relevance by directly *aligning* the two vectors — taking their dot product. Simpler, faster, fewer parameters, but it relies on the vectors already living in compatible spaces.
+
+Both judges work; the multiplicative one happens to scale better and is the one that won.
 
 ## The shared framework
 
@@ -93,7 +111,25 @@ $$
 
 This is called **post-attention**.
 
-## Comparison
+### Pre vs post attention, visually
+
+```mermaid
+flowchart LR
+    subgraph "Bahdanau (pre-attention)"
+        BA1["h_{t-1} (prev decoder state)"] --> BA2["score with all h_enc"]
+        BA2 --> BA3["context c_t"]
+        BA3 --> BA4["GRU input = [x_t ; c_t]"]
+        BA4 --> BA5["h_t (new decoder state)"]
+    end
+    subgraph "Luong (post-attention)"
+        LA1["h_t = LSTM(x_t, h_{t-1})"]
+        LA1 --> LA2["score with all h_enc"]
+        LA2 --> LA3["context c_t"]
+        LA3 --> LA4["combine [h_t ; c_t] → output"]
+    end
+```
+
+## Side-by-side comparison
 
 | Property | Bahdanau (additive) | Luong (dot product) |
 |---|---|---|
@@ -199,95 +235,31 @@ class LuongAttention(nn.Module):
 
 
 # ============================================================
-# Seq2Seq decoder with Bahdanau attention
+# Try it: same inputs, both mechanisms
 # ============================================================
-class BahdanauDecoder(nn.Module):
-    """
-    LSTM decoder with Bahdanau attention.
-    At each step: concat(input, context) → GRU → output
-    """
-    def __init__(self, vocab_size: int, embed_dim: int,
-                 hidden_size: int, enc_hidden_size: int):
-        super().__init__()
-        self.embed = nn.Embedding(vocab_size, embed_dim)
-        self.attention = BahdanauAttention(
-            query_dim=hidden_size,
-            key_dim=enc_hidden_size,
-            attn_dim=128,
-        )
-        # GRU takes [embedding; context] as input
-        self.gru = nn.GRU(embed_dim + enc_hidden_size, hidden_size, batch_first=True)
-        self.out = nn.Linear(hidden_size, vocab_size)
+B, T_src, H = 2, 8, 64
+query = torch.randn(B, H)
+keys = torch.randn(B, T_src, H)
 
-    def forward_step(self, input_token: torch.Tensor,
-                     h_prev: torch.Tensor,
-                     encoder_outputs: torch.Tensor,
-                     mask: torch.Tensor = None):
-        """
-        input_token: (B,) — current token id
-        h_prev:      (1, B, H) — previous decoder hidden state
-        encoder_outputs: (B, T_src, H_enc)
-        """
-        emb = self.embed(input_token).unsqueeze(1)          # (B, 1, E)
-        query = h_prev.squeeze(0)                             # (B, H)
+bah = BahdanauAttention(H, H, attn_dim=128)
+lng = LuongAttention(H, H, score_type="general")
 
-        # Attention: query with previous hidden state (Bahdanau style)
-        context, attn_weights = self.attention(
-            query, encoder_outputs, mask
-        )  # context: (B, H_enc)
+ctx_b, w_b = bah(query, keys)
+ctx_l, w_l = lng(query, keys)
 
-        # Concat embedding with context, then GRU
-        gru_input = torch.cat([emb, context.unsqueeze(1)], dim=-1)  # (B, 1, E+H_enc)
-        output, h_n = self.gru(gru_input, h_prev)
-
-        logit = self.out(output.squeeze(1))  # (B, vocab)
-        return logit, h_n, attn_weights
-
-    def forward(self, targets: torch.Tensor,
-                h_0: torch.Tensor,
-                encoder_outputs: torch.Tensor,
-                mask: torch.Tensor = None,
-                teacher_forcing: float = 1.0) -> torch.Tensor:
-        """Decode a full sequence with optional teacher forcing."""
-        batch, T = targets.shape
-        logits = []
-        h = h_0
-
-        # Start token (index 1 by convention)
-        token = targets[:, 0]
-
-        for t in range(1, T):
-            logit, h, _ = self.forward_step(token, h, encoder_outputs, mask)
-            logits.append(logit)
-
-            if torch.rand(1).item() < teacher_forcing:
-                token = targets[:, t]             # teacher forcing
-            else:
-                token = logit.argmax(-1)           # autoregressive
-
-        return torch.stack(logits, dim=1)         # (B, T-1, vocab)
-
-
-# ============================================================
-# Visualization: attention weights
-# ============================================================
-@torch.no_grad()
-def visualize_attention(attn_weights: torch.Tensor,
-                        src_tokens: list[str],
-                        tgt_tokens: list[str]):
-    """
-    Print a text-based alignment matrix.
-    attn_weights: (T_tgt, T_src)
-    """
-    print("\nAttention alignment (rows=target, cols=source):")
-    header = "     " + "  ".join(f"{t:>6}" for t in src_tokens)
-    print(header)
-    for i, tgt in enumerate(tgt_tokens):
-        row = f"{tgt:>5} " + "  ".join(
-            f"{attn_weights[i, j]:.3f}" for j in range(len(src_tokens))
-        )
-        print(row)
+print("Bahdanau context:", ctx_b.shape, " weights:", w_b.shape)
+print("Luong    context:", ctx_l.shape, " weights:", w_l.shape)
+print("Both should sum to 1 per row:", w_b.sum(-1), w_l.sum(-1))
 ```
+
+### Try it yourself: experiments
+
+| Question | Try this |
+|----------|----------|
+| Are dot-product scores larger when hidden dim is large? | Compute scores at H=16, 64, 256, 1024; std grows with √H |
+| What does adding scaling do? | Use `score_type="scaled_dot"` — softmax stops collapsing for large H |
+| Compare parameter counts | `sum(p.numel() for p in bah.parameters())` vs same for lng |
+| Mask out the last 3 source tokens | Pass `mask = torch.tensor([[F]*5 + [T]*3]*2)`; attention weights on those positions become 0 |
 
 ## Connection to transformer attention
 
@@ -324,6 +296,13 @@ Expected alignment:
 
 When a model fails, the attention weights become diffuse — every source position gets nearly equal weight, and the context vector is a noisy average that carries little useful information.
 
+## Cross-references
+
+- **Prerequisite:** [69 — Attention Mechanism for Seq2Seq](./69-attention-mechanism-for-seq2seq-models.md) — the framework both variants share
+- **Follow-up:** [73 — Self-Attention with Code](./73-self-attention-in-transformers-with-code.md) — Luong's dot-product attention generalized to a single sequence
+- **Follow-up:** [74 — Scaled Dot-Product Attention](./74-scaled-dot-product-attention.md) — why the $\sqrt{d_k}$ scaling factor was needed
+- **Follow-up:** [82 — Cross-Attention](./82-cross-attention-in-transformers.md) — the modern transformer version of seq2seq attention
+
 ## Interview questions
 
 <details>
@@ -344,12 +323,25 @@ In vanilla seq2seq, the encoder must compress the entire source sentence into a 
 Luong's "general" score is $h^{dec\top} W_a h^{enc}$ — a bilinear form. The "scaled dot" variant adds $1/\sqrt{d}$ scaling. In transformers, the same operation is expressed as $Q K^\top / \sqrt{d_k}$ where $Q = h^{dec} W_Q$ and $K = h^{enc} W_K$. The key difference: transformers apply separate learned projections to both queries and keys (via $W_Q, W_K$) and also separate values ($V = h^{enc} W_V$), whereas Luong uses the raw encoder hidden states as both keys and values. Transformer multi-head attention runs $h$ independent Luong-style dot-product attentions in parallel in projected subspaces.
 </details>
 
+<details>
+<summary>Why did the field eventually settle on dot-product (Luong-style) over additive (Bahdanau-style)?</summary>
+
+Three reasons: (1) **Speed** — a dot product is one matmul; an additive score is a small MLP per pair, much slower in practice. (2) **GPU friendliness** — multiplicative attention reduces directly to large matrix multiplies (`Q @ K.T`), which GPUs are optimized for. (3) **Generalization** — once the $\sqrt{d_k}$ scaling was added (transformers), dot-product attention became numerically stable at any hidden size. The two are roughly equally expressive for typical hidden sizes, but Luong's flavor scales better, and that's what mattered when sequences and models grew.
+</details>
+
 ## Common mistakes
 
-- Confusing `keys` and `values` when implementing attention — in classic seq2seq attention, keys and values are the same (encoder hidden states). In transformers, they are separate projections
-- Using the wrong query in Bahdanau attention — it uses $h^{dec}_{t-1}$ (previous step), not $h^{dec}_t$ (current step)
-- Not masking padding positions before softmax — padding should get $-\infty$ score so the attention weight is 0 on padding tokens
+- Confusing `keys` and `values` when implementing attention — in classic seq2seq attention, keys and values are the same (encoder hidden states). In transformers, they are separate projections.
+- Using the wrong query in Bahdanau attention — it uses $h^{dec}_{t-1}$ (previous step), not $h^{dec}_t$ (current step).
+- Not masking padding positions before softmax — padding should get $-\infty$ score so the attention weight is 0 on padding tokens.
+- Using unscaled dot-product attention when hidden dim is large — softmax saturates and gradients vanish; this is exactly the problem $\sqrt{d_k}$ scaling solves.
 
 ## Final takeaway
 
 Bahdanau attention (additive, feed-forward scorer) and Luong attention (multiplicative, dot-product scorer) both let the decoder directly query all encoder hidden states, eliminating the bottleneck of compressing a sentence to a single vector. Luong's scaled dot-product scoring is the direct precursor to transformer self-attention — the same operation, extended with separate key/value projections and multi-head parallelism. Understanding both mechanisms makes transformer attention immediately intuitive: it is the same idea, generalized and parallelized.
+
+## References
+
+- Bahdanau, D., Cho, K., & Bengio, Y. (2015). *Neural Machine Translation by Jointly Learning to Align and Translate*. ICLR.
+- Luong, M.-T., Pham, H., & Manning, C. D. (2015). *Effective Approaches to Attention-based Neural Machine Translation*. EMNLP.
+- Vaswani, A., et al. (2017). *Attention is All You Need*. NeurIPS.

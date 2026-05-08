@@ -10,6 +10,8 @@ tags: [transformer, inference, decoding, kv-cache, beam-search, deep-learning]
 
 # Transformer inference step by step
 
+> **TL;DR.** Training looks at the whole answer at once and predicts every position in parallel (teacher forcing). Inference can only see what has been generated so far — it produces text one token at a time, feeding each output back as input. The decoding strategy (greedy, beam search, top-p) picks *which* token to emit; KV caching is what makes the loop fast enough to run in real time.
+
 Training a transformer uses teacher forcing: the decoder sees the ground-truth prefix at every step in parallel. Inference is different — the model must generate tokens one at a time, each step feeding its own previous output back as input. This autoregressive loop is the fundamental regime of all text generation.
 
 ## One-line definition
@@ -23,6 +25,17 @@ Transformer inference is an autoregressive process: at each step, the model cond
 
 Inference mechanics explain why language models behave the way they do in practice. Greedy decoding produces repetitive text; beam search balances quality and diversity; temperature and top-p sampling control creativity. KV caching is why modern LLMs can generate hundreds of tokens per second despite recomputing attention at every step. Understanding these details is essential for deploying and debugging generation systems.
 
+## Try it interactively
+
+Before reading further, play with these tools to see autoregressive generation in action:
+
+- **[OpenAI Playground](https://platform.openai.com/playground)** — toggle temperature, top-p, max tokens; watch how output changes
+- **[HuggingFace Inference Playground](https://huggingface.co/playground)** — same idea, open-source models
+- **[Transformer Explainer](https://poloclub.github.io/transformer-explainer/)** — step through a single GPT-2 forward pass and see logits at each position
+- **[bbycroft LLM Visualization](https://bbycroft.net/llm)** — animated 3D walkthrough of a real transformer generating one token
+
+A quick trick: in any of these playgrounds, set temperature to 0 and re-run the same prompt twice — the output is identical (greedy). Then set temperature to 1.5 — the same prompt produces different completions every time.
+
 ## Training vs. inference: teacher forcing vs. autoregression
 
 During **training**, the decoder processes the full target sequence in parallel using teacher forcing:
@@ -33,7 +46,7 @@ $$
 
 The ground-truth tokens $x_1, \ldots, x_{t-1}$ are fed as input; the model predicts all positions simultaneously using the causal mask.
 
-During **inference**, the model has no ground-truth prefix. It starts with only the start token $\langle \text{BOS} \rangle$ and generates one token at a time:
+During **inference**, the model has no ground-truth prefix. It starts with only the start token $\langle \text{BOS} \rangle$ (or a user prompt) and generates one token at a time:
 
 $$
 x_{t+1} \sim p_\theta(\cdot \mid x_1, x_2, \ldots, x_t)
@@ -54,6 +67,10 @@ flowchart TD
     end
 ```
 
+### A useful analogy
+
+Training is like an open-book exam: the model can see every answer while learning to predict each one. Inference is like writing an essay live — every sentence depends on everything you've already written, and a wrong word three sentences ago colors everything that follows. This asymmetry is called **exposure bias**: at training time the model only sees correct prefixes; at inference time it has to live with its own mistakes.
+
 ## The autoregressive generation loop
 
 ```
@@ -73,6 +90,20 @@ Output: generated token sequence
 ```
 
 At each step, only the last position's logits matter — the model predicts only $x_{t+1}$, not all positions.
+
+### Worked example: 5-token vocabulary
+
+Imagine a tiny model with vocabulary $\{$BOS, "cat", "sat", "mat", EOS$\}$ that has been trained on the sentence "cat sat mat". Step by step with greedy decoding:
+
+| Step | Input so far | Top-1 predicted next token | Sequence after |
+|------|--------------|----------------------------|----------------|
+| 1 | `[BOS]` | "cat" | `[BOS, cat]` |
+| 2 | `[BOS, cat]` | "sat" | `[BOS, cat, sat]` |
+| 3 | `[BOS, cat, sat]` | "mat" | `[BOS, cat, sat, mat]` |
+| 4 | `[BOS, cat, sat, mat]` | "EOS" | `[BOS, cat, sat, mat, EOS]` |
+| 5 | — | (loop exits) | Final output: `cat sat mat` |
+
+Each row reruns the model on the *full* sequence so far (or a single new token if KV caching is on; see below).
 
 ## Decoding strategies
 
@@ -108,11 +139,13 @@ $$
 p_\tau(v) = \frac{\exp(z_v / \tau)}{\sum_{v'} \exp(z_{v'} / \tau)}
 $$
 
-- $\tau = 1$: unmodified distribution
-- $\tau < 1$ (e.g., 0.7): sharper distribution — more confident, less diverse
-- $\tau > 1$ (e.g., 1.5): flatter distribution — more random, more creative
-- $\tau \to 0$: approaches greedy decoding
-- $\tau \to \infty$: approaches uniform random sampling
+| τ | Behavior | Best for |
+|---|----------|----------|
+| 0 | Approaches greedy (deterministic) | Code, math, factual answers |
+| 0.2–0.5 | Slightly randomized, mostly safe | Question answering |
+| 0.7–1.0 | Balanced quality & creativity | Most chat use cases |
+| 1.2–2.0 | Diverse, sometimes incoherent | Brainstorming, creative writing |
+| ∞ | Uniform random sampling | Never useful in practice |
 
 ### Top-$k$ sampling
 
@@ -143,6 +176,17 @@ flowchart LR
     topp --> sample["Sample next token"]
 ```
 
+### Side-by-side: same prompt, different strategies
+
+| Prompt: "Once upon a time" | Output (illustrative) |
+|----------------------------|------------------------|
+| Greedy | "there was a king who lived in a castle. The king was very rich and very happy. The king was very rich..." |
+| Beam search ($B=5$) | "there was a brave knight who saved the kingdom from a fearsome dragon." |
+| Top-p = 0.9, τ = 0.7 | "in a small fishing village, a curious girl named Mira found a peculiar shell on the shore." |
+| Top-p = 0.9, τ = 1.5 | "the moon decided to grow legs and hop down to argue with a particularly opinionated cactus." |
+
+The first row shows greedy's repetitiveness; the last row shows high-temperature creativity tipping into chaos.
+
 ## KV caching
 
 Without caching, generating step $t$ requires recomputing keys and values for all $t-1$ previous tokens — $O(t^2)$ total work over the generation. KV caching stores computed key-value pairs from previous steps and only computes for the new token at each step.
@@ -164,13 +208,47 @@ flowchart TD
     end
 ```
 
+### How the cache shape evolves
+
+For a single layer with batch size 1, 8 heads, and $d_{\text{head}} = 64$:
+
+| Generation step | Q shape (per layer) | K, V cache shape |
+|-----------------|---------------------|--------------------|
+| 1 | (1, 8, 1, 64) | (1, 8, 1, 64) |
+| 2 | (1, 8, 1, 64) | (1, 8, 2, 64) |
+| 3 | (1, 8, 1, 64) | (1, 8, 3, 64) |
+| ... | ... | ... |
+| $t$ | (1, 8, 1, 64) | (1, 8, $t$, 64) |
+
+Q stays small (just the new token); K and V grow linearly. This is the key insight: each step does $O(t)$ work, not $O(t^2)$.
+
 **Memory cost of KV cache**: for each layer, storing all keys and values for a sequence of length $T$ requires:
 
 $$
 \text{memory} = 2 \times n_{\text{layers}} \times n_{\text{heads}} \times T \times d_{\text{head}} \times \text{bytes\_per\_float}
 $$
 
-For a 7B-parameter model with 32 layers, 32 heads, $d_{\text{head}} = 128$, sequence length 4096, float16: ~2 GB per batch item. This is why context length directly limits batch size during inference.
+For a 7B-parameter model with 32 layers, 32 heads, $d_{\text{head}} = 128$, sequence length 4096, float16: **~2 GB per batch item**. This is why context length directly limits batch size during inference, and why techniques like Multi-Query Attention (MQA) and Grouped-Query Attention (GQA) — which share K,V across heads — are standard in modern LLMs.
+
+## What if KV caching is off?
+
+Try this experiment with HuggingFace `transformers`:
+
+```python
+import time, torch
+from transformers import GPT2LMHeadModel, GPT2Tokenizer
+
+tok = GPT2Tokenizer.from_pretrained("gpt2")
+m = GPT2LMHeadModel.from_pretrained("gpt2").eval()
+ids = tok("Once upon a time", return_tensors="pt").input_ids
+
+for use_cache in [True, False]:
+    t0 = time.time()
+    out = m.generate(ids, max_new_tokens=200, use_cache=use_cache, do_sample=False)
+    print(f"use_cache={use_cache}: {time.time()-t0:.2f}s")
+```
+
+You will typically see the no-cache run take **5–10× longer** for 200 tokens, and the gap grows quadratically with sequence length.
 
 ## Stopping criteria
 
@@ -178,6 +256,7 @@ Generation stops when:
 1. The model produces `[EOS]` (end-of-sequence token)
 2. `max_new_tokens` is reached
 3. A stop string is matched (e.g., `\n\n`, `</answer>`)
+4. (For batched inference) all sequences in the batch have hit one of the above
 
 ## Python code
 
@@ -267,7 +346,7 @@ print("=== Greedy decoding ===")
 greedy_id = logits.argmax().item()
 print(f"Next token: {greedy_id}")  # Always token 3 (highest logit 2.1)
 
-print("\n=== Temperature sampling (τ=0.7, τ=1.5) ===")
+print("\n=== Temperature sampling (τ=0.7, τ=1.0, τ=1.5) ===")
 for tau in [0.7, 1.0, 1.5]:
     counts = {}
     for _ in range(2000):
@@ -283,6 +362,16 @@ for _ in range(2000):
     counts[tid] = counts.get(tid, 0) + 1
 print(f"  Sampled tokens: {sorted(counts.keys())}")
 ```
+
+### Try it yourself: experiments
+
+| Experiment | Modification | Expected observation |
+|------------|--------------|----------------------|
+| What does τ → 0 do? | `temperature=0.01` | Almost always picks the same token (greedy) |
+| What does τ → ∞ do? | `temperature=100.0` | Distribution becomes ~uniform; all tokens equally likely |
+| Effect of top-k = 1 | `top_k=1` | Equivalent to greedy |
+| Effect of top-p = 0.5 | `top_p=0.5` | Only the top few high-probability tokens sampled |
+| Combine top-k + top-p | `top_k=10, top_p=0.9` | Belt-and-suspenders filter (rarely makes a difference) |
 
 ### KV cache in practice (GPT-style decoder-only)
 
@@ -370,11 +459,18 @@ print(f"Generated: {generated}")
 
 | Strategy | Deterministic? | Quality | Diversity | Speed | Use case |
 |---|---|---|---|---|---|
-| Greedy | Yes | Moderate | Low | Fastest | Quick baseline |
+| Greedy | Yes | Moderate | Low | Fastest | Quick baseline, code |
 | Beam search ($B=5$) | Yes | High | Low | $B\times$ slower | Translation, summarization |
 | Top-$k$ sampling | No | Good | Medium | Fast | Creative generation |
 | Top-$p$ sampling | No | Good | Adaptive | Fast | Open-ended generation |
 | Temperature + top-$p$ | No | Tunable | High | Fast | Chatbots, storytelling |
+
+## Cross-references
+
+- **Prerequisite:** [81 — Masked Self-Attention in the Decoder](./81-masked-self-attention-in-the-transformer-decoder.md) — the causal mask used at every step
+- **Prerequisite:** [83 — Transformer Decoder Architecture](./83-transformer-decoder-architecture.md) — what the decoder actually computes per step
+- **Related:** [85 — Transformer Training Objectives](./85-transformer-training-objectives.md) — why teacher forcing creates the train/inference mismatch
+- **Follow-up:** [88 — GPT (Decoder-Only Causal LM)](./88-gpt-decoder-only-causal-lm.md) — the simplest setup where this loop is the entire model
 
 ## Interview questions
 
@@ -402,6 +498,12 @@ Without caching, each new decoding step re-runs the full transformer on the enti
 Top-k sampling always keeps exactly k tokens regardless of the probability distribution. When the model is confident (one token has very high probability), k=50 includes many improbable tokens. When the model is uncertain (probability spread over hundreds of tokens), k=50 cuts off plausible options. Top-p (nucleus) sampling adapts: it keeps the smallest set of tokens whose cumulative probability reaches p. When the model is confident, the nucleus is small (1–3 tokens); when uncertain, the nucleus is large. This gives better calibration between quality and diversity.
 </details>
 
+<details>
+<summary>Why does the KV cache use so much memory in long-context inference?</summary>
+
+The cache stores keys and values for every layer, every head, and every past token. Memory grows linearly with sequence length and with model size. For a 7B model at 4K context: ~2GB per batch item. For a 70B model at 32K context: ~50GB per batch item. This is the dominant memory cost during long-context inference and is the reason for grouped-query / multi-query attention (which share K,V across heads) and for techniques like PagedAttention (vLLM) that manage cache fragments efficiently across requests.
+</details>
+
 ## Common mistakes
 
 - Calling `model(full_sequence)` at every step without KV caching — generates correctly but is $O(T^2)$ slower than necessary.
@@ -409,6 +511,7 @@ Top-k sampling always keeps exactly k tokens regardless of the probability distr
 - Forgetting to set `model.eval()` during generation — dropout is active in training mode, giving different (stochastic) outputs each run.
 - Using beam search for open-ended generation (chatbots, stories) — it degenerates to repetitive, safe text; top-p sampling is better.
 - Not passing a causal mask when running the decoder for multi-token prompts — the prompt tokens must not attend to future positions.
+- Comparing temperatures across models without normalizing — the same `temperature=0.7` can feel very different on a model with calibrated logits vs. an over-confident one.
 
 ## Final takeaway
 
@@ -419,3 +522,5 @@ Transformer inference is token-by-token autoregressive generation. The model pre
 - Vaswani, A., et al. (2017). Attention is All You Need. NeurIPS.
 - Holtzman, A., et al. (2020). The Curious Case of Neural Text Degeneration. ICLR. (introduces nucleus/top-p sampling)
 - Pope, R., et al. (2023). Efficiently Scaling Transformer Inference. MLSys.
+- Kwon, W., et al. (2023). Efficient Memory Management for LLM Serving with PagedAttention (vLLM). SOSP.
+- Brendan Bycroft — [LLM Visualization](https://bbycroft.net/llm).

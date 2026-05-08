@@ -10,7 +10,27 @@ tags: [transformer, decoder, architecture, autoregressive, deep-learning]
 
 # Transformer decoder architecture
 
+> **TL;DR.** A decoder block is what an encoder block becomes when (1) you add a causal mask to its self-attention so it can't peek at future tokens, and (2) you slip a second attention sublayer in between — *cross-attention* — that lets the decoder read the encoder's output. So an encoder block has 2 sublayers (self-attn + FFN); a decoder block has 3 (masked self-attn + cross-attn + FFN). Decoder-only models like GPT drop the cross-attention and revert to 2 sublayers but with the causal mask still in place.
+
 The transformer encoder takes a full input and produces contextual representations. The transformer decoder generates an output sequence token by token, conditioned on both its own previous output and (in seq2seq models) the encoder's representation of the input. This note covers the full decoder architecture — three sublayers, their interactions, and how the architecture differs between encoder-decoder and decoder-only variants.
+
+## Try it interactively
+
+- **[Transformer Explainer](https://poloclub.github.io/transformer-explainer/)** — step through GPT-2 (decoder-only), see masked self-attention in action
+- **[bbycroft LLM Visualization](https://bbycroft.net/llm)** — animated 3D walk through every component of a decoder
+- **[Hugging Face MarianMT](https://huggingface.co/docs/transformers/model_doc/marian)** — load an encoder-decoder translation model and inspect both attention types
+- **[Karpathy — Let's build GPT (YouTube)](https://www.youtube.com/watch?v=kCc8FmEb1nY)** — implements a complete decoder-only transformer from scratch
+- **[Hugging Face BART](https://huggingface.co/facebook/bart-large)** — a classic encoder-decoder; play with summarization to see both stacks at work
+
+## A real-world analogy
+
+Continuing the workshop analogy from the encoder note: if the encoder is a group of subject-matter experts who summarize a topic together, the decoder is a **panel of speakers giving a presentation** based on that summary.
+
+- Each speaker can hear what other speakers have already said (masked self-attention — but only past speakers, never future ones).
+- They can also peek at the experts' notes whenever they want (cross-attention to the encoder).
+- They polish what they want to say (the FFN) before speaking the next word.
+
+The "panel speakers can't see future panel speakers" rule is the causal mask. The "they can read the experts' notes" channel is cross-attention. In a GPT-style decoder-only model there are no separate experts — the speakers reference each other and an opening prompt.
 
 ## One-line definition
 
@@ -341,6 +361,16 @@ for block in gpt_block:
 print(f"\nDecoder-only output: {out.shape}")   # (1, 8, 64)
 ```
 
+### Try it yourself: experiments
+
+| Question | Try this |
+|----------|----------|
+| Is the decoder bigger than the encoder? | Compare param counts — decoder has 3 sublayers per block vs encoder's 2; ~50% more params per layer |
+| What if you swap mask order? | Apply causal mask to cross-attention (wrong) — model can't see "future" source tokens, hurts quality |
+| Compare seq2seq vs decoder-only on translation | Train both on the same translation pair; encoder-decoder usually wins on short, well-aligned tasks |
+| Effect of weight tying | Toggle `lm_head.weight = token_emb.weight` — saves ~30% of parameters with little quality loss |
+| Inspect cross-attention heatmap | After training, plot `cross_weights[0]` — should show source→target alignment |
+
 ## Comparison: encoder block vs. decoder block
 
 | | Encoder block | Decoder block |
@@ -351,6 +381,15 @@ print(f"\nDecoder-only output: {out.shape}")   # (1, 8, 64)
 | Input | Source tokens | Target tokens (shifted right) |
 | Output | Contextual representations | Contextualized target reps |
 | Used for | Understanding | Generation |
+
+## Cross-references
+
+- **Prerequisite:** [80 — Transformer Encoder Architecture](./80-transformer-encoder-architecture.md) — the encoder counterpart with 2 sublayers
+- **Prerequisite:** [81 — Masked Self-Attention](./81-masked-self-attention-in-the-transformer-decoder.md) — first sublayer of every decoder block
+- **Prerequisite:** [82 — Cross-Attention](./82-cross-attention-in-transformers.md) — second sublayer (skipped in decoder-only models)
+- **Follow-up:** [84 — Transformer Inference](./84-transformer-inference-step-by-step.md) — how the decoder generates tokens at inference
+- **Follow-up:** [88 — GPT (Decoder-Only)](./88-gpt-decoder-only-causal-lm.md) — the simplified 2-sublayer variant
+- **Follow-up:** [89 — T5 (Encoder-Decoder)](./89-t5-encoder-decoder-pretraining.md) — the full 3-sublayer variant in production
 
 ## Interview questions
 

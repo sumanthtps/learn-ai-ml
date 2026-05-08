@@ -10,7 +10,21 @@ tags: [bert, encoder, mlm, pre-training, transformers, nlp]
 
 # BERT: encoder-only pre-training
 
+> **TL;DR.** BERT is a transformer **encoder** (no decoder, no causal mask) pre-trained by hiding ~15% of tokens and predicting them with bidirectional context. After pretraining, you slap a tiny task-specific head on top of the `[CLS]` token (or per-token outputs) and fine-tune on a small labeled dataset. This pre-train-then-fine-tune recipe is what changed NLP forever in 2018 — every modern encoder model (RoBERTa, DeBERTa, sentence-BERT, embedding models) descends from it.
+
 BERT (Bidirectional Encoder Representations from Transformers) demonstrated that pre-training a deep bidirectional transformer on unlabeled text with masked language modeling produces representations that transfer powerfully to nearly every NLP task. Before BERT (2018), NLP models were trained from scratch for each task. After BERT, the dominant paradigm became: pre-train once on a huge corpus, fine-tune cheaply on small labeled datasets.
+
+## Try it interactively
+
+- **[BERT Fill-Mask demo](https://huggingface.co/bert-base-uncased)** — paste a sentence with `[MASK]` and see top-5 predictions in your browser
+- **[BertViz](https://github.com/jessevig/bertviz)** — visualize BERT's attention patterns layer by layer
+- **[Sentence-BERT demo](https://huggingface.co/sentence-transformers)** — embed two sentences and see semantic similarity scores
+- **[Hugging Face fine-tuning tutorial](https://huggingface.co/learn/nlp-course/chapter3)** — fine-tune BERT on a real classification task in a Colab
+- **[exBERT](https://exbert.net/exBERT.html)** — interactive BERT exploration: hover over tokens to see attention
+
+## A real-world analogy
+
+BERT's training is like asking someone to **read a paragraph with crossed-out words** and fill them back in. They can read everything before AND after each blank, so they have full context. Once they've practiced this on millions of paragraphs from books and Wikipedia, they've built a deep understanding of language — and now they can be quickly retrained ("fine-tuned") to do specific jobs like "is this review positive?" or "is this entity a person?". The pre-training builds the general reading skill; fine-tuning specializes it cheaply.
 
 ## One-line definition
 
@@ -226,6 +240,16 @@ for tok, pred in zip(tokens, token_preds[0]):
     print(f"  {tok:15} → label {pred.item()}")
 ```
 
+### Try it yourself: experiments
+
+| Question | Try this |
+|----------|----------|
+| Visualize "bank" disambiguation | Embed both sentences, take `last_hidden_state` for the "bank" token, compare cosine similarity |
+| Effect of [CLS] vs mean pooling | Compare `cls_repr` to `last_hidden.mean(dim=1)` for sentence similarity — mean pooling often wins |
+| Probe a specific layer | `BertModel(..., output_hidden_states=True)` → inspect early/middle/late layers separately |
+| Fine-tune with frozen BERT | Set `bert.requires_grad_(False)` and train only the head — much faster, slightly worse accuracy |
+| Try a different mask ratio | Modify your data collator to mask 25% — usually hurts performance vs the canonical 15% |
+
 ## BERT variants
 
 | Model | Key change | Performance |
@@ -247,6 +271,14 @@ for tok, pred in zip(tokens, token_preds[0]):
 | Few-shot tasks | GPT | In-context learning via prompting |
 | Question answering (extractive) | BERT | Span extraction from passage |
 | Question answering (generative) | GPT/T5 | Generate answer free-form |
+
+## Cross-references
+
+- **Prerequisite:** [80 — Transformer Encoder Architecture](./80-transformer-encoder-architecture.md) — BERT's architecture exactly
+- **Prerequisite:** [85 — Training Objectives](./85-transformer-training-objectives.md) — MLM in detail
+- **Prerequisite:** [86 — Tokenization](./86-tokenization-bpe-wordpiece-sentencepiece.md) — BERT uses WordPiece
+- **Follow-up:** [88 — GPT (Decoder-Only)](./88-gpt-decoder-only-causal-lm.md) — the contrasting decoder-only paradigm
+- **Follow-up:** [90 — Fine-Tuning Transformers](./90-fine-tuning-transformers.md) — how to adapt BERT to your task
 
 ## Interview questions
 

@@ -10,7 +10,20 @@ tags: [masked-attention, causal-mask, decoder, transformers, deep-learning]
 
 # Masked self-attention in the transformer decoder
 
+> **TL;DR.** The decoder is trained to predict each token from its **past** only — but during teacher forcing, the entire ground-truth sequence is fed at once. Without intervention, position $t$ would just look ahead and copy position $t+1$ (cheating). The **causal mask** is an upper-triangular matrix of $-\infty$ added to the attention scores before softmax — it sets all future-position weights to exactly zero, enforcing "look only at past" while still letting all positions train in parallel.
+
 The transformer decoder is trained to predict the next token at every position simultaneously — a technique called teacher forcing. But if position $t$ can see the target token at position $t+1$ during training, it is cheating. The causal mask prevents this: it blocks each position from attending to any future position, enforcing the same constraint that holds during inference.
+
+## Try it interactively
+
+- **[Transformer Explainer](https://poloclub.github.io/transformer-explainer/)** — see the causal attention pattern in a real GPT-2 (lower-triangular mask is visible)
+- **[BertViz with GPT-2](https://github.com/jessevig/bertviz#causal-attention)** — visualize causal attention in a decoder model
+- **[Andrej Karpathy — Let's build GPT (YouTube)](https://www.youtube.com/watch?v=kCc8FmEb1nY)** — implements the causal mask from scratch, ~3 lines of code that change everything
+- **[PyTorch nn.Transformer.generate_square_subsequent_mask](https://pytorch.org/docs/stable/generated/torch.nn.Transformer.html#torch.nn.Transformer.generate_square_subsequent_mask)** — the official mask builder, runnable in 1 line
+
+## A real-world analogy
+
+Imagine you're sitting an exam where you have to predict each word of a paragraph in order, and the entire paragraph is printed in front of you. To make the test honest, the proctor places a sliding ruler across the page that always covers everything to the right of the word you're predicting. You can use everything you've already seen, but you can't peek at the answer. The causal mask is that ruler — applied mathematically, in parallel, to every position at once.
 
 ## One-line definition
 
@@ -224,6 +237,16 @@ out_inf, _ = mha(x_inf, x_inf, x_inf,
 print(f"\nInference step (3 tokens): {out_inf.shape}")   # (1, 3, 32)
 ```
 
+### Try it yourself: experiments
+
+| Question | Try this |
+|----------|----------|
+| What happens with `diagonal=0` in `triu`? | Mask includes the diagonal — tokens can't attend to themselves; loss explodes |
+| Visualize the mask as a heatmap | `plt.imshow(make_causal_mask(8).numpy())` — classic upper-triangular pattern |
+| Check that future weights are 0 | After computing `attn`, verify `attn[0, 2, 3:].sum() == 0` |
+| What if you skip the mask? | The model trains, but at inference (where future doesn't exist) it produces gibberish |
+| Combine with padding mask | Build both, sum them: `attn_mask = causal + padding` (both should be `-inf` where masked) |
+
 ## What attention patterns look like with the causal mask
 
 ```
@@ -247,6 +270,14 @@ Each row is a valid probability distribution over the tokens it is allowed to se
 | Purpose | Ignore pad tokens | Ignore future + ignore pad |
 | Shape | `(batch, 1, src_len)` | `(seq_len, seq_len)` + `(batch, 1, tgt_len)` |
 | Symmetric? | Yes (padding is symmetric) | No (lower-triangular pattern) |
+
+## Cross-references
+
+- **Prerequisite:** [73 — Self-Attention with Code](./73-self-attention-in-transformers-with-code.md) — the unmasked operation this builds on
+- **Prerequisite:** [76 — Why Self-Attention](./76-why-self-attention-is-called-self-attention.md) — the encoder counterpart that uses no mask
+- **Follow-up:** [82 — Cross-Attention](./82-cross-attention-in-transformers.md) — the second attention sublayer in the decoder block
+- **Follow-up:** [83 — Transformer Decoder Architecture](./83-transformer-decoder-architecture.md) — how this fits into a complete decoder block
+- **Follow-up:** [84 — Transformer Inference](./84-transformer-inference-step-by-step.md) — what happens when there's no need for the mask (sequential generation)
 
 ## Interview questions
 

@@ -10,7 +10,22 @@ tags: [gpt, decoder-only, causal-lm, llm, transformers, deep-learning]
 
 # GPT: decoder-only causal language modeling
 
+> **TL;DR.** GPT is the simplest possible transformer: a stack of decoder blocks (causal self-attention + FFN, no cross-attention) trained on one objective — *predict the next token*. The causal mask means every position is both an input and a training target, so a sequence of T tokens gives T-1 gradient signals. Scale this up enough (GPT-3, 175B params) and the model starts solving tasks just by reading examples in the prompt — no fine-tuning needed. Every modern LLM (LLaMA, Mistral, Claude, Gemini) is a polished version of this pattern.
+
 GPT (Generative Pre-trained Transformer) demonstrated that a single pre-trained language model — trained purely to predict the next token — could be fine-tuned for almost any NLP task. GPT-3 (2020) then showed the model could perform tasks without any fine-tuning, just by reading a few examples in the prompt. This was the foundation for the modern LLM era.
+
+## Try it interactively
+
+- **[OpenAI Playground](https://platform.openai.com/playground)** — interact with GPT-3.5/4 directly: tweak temperature, top-p, max tokens
+- **[Hugging Face GPT-2 demo](https://huggingface.co/openai-community/gpt2)** — original 2019 GPT-2 in your browser, free
+- **[nanoGPT (Karpathy)](https://github.com/karpathy/nanoGPT)** — train a tiny GPT on Shakespeare in ~30 minutes on a laptop
+- **[Karpathy — Let's build GPT (YouTube)](https://www.youtube.com/watch?v=kCc8FmEb1nY)** — 2-hour live coding of a working GPT from scratch
+- **[bbycroft LLM Visualization](https://bbycroft.net/llm)** — animated 3D walkthrough of every part of a working transformer
+- **[Replicate base-model LLaMA](https://replicate.com/explore)** — try a non-RLHF'd model to feel the raw "next-token predictor" behavior
+
+## A real-world analogy
+
+GPT is like an **autocomplete engine that has read the entire internet**. At every cursor position, it asks: "given everything to the left, what's the most likely next token?" That's it — that's the whole game. Train it on enough text and "the most likely next token" turns out to encode grammar, world knowledge, reasoning patterns, and even instruction-following (because the training data contained instructions and their answers). Few-shot prompting is just providing the autocomplete engine with a few examples so it knows what *kind* of completion you want.
 
 ## One-line definition
 
@@ -327,6 +342,17 @@ print(f"\nPrompt:    {prompt}")
 print(f"Generated: {generated}")
 ```
 
+### Try it yourself: experiments
+
+| Question | Try this |
+|----------|----------|
+| Temperature 0 vs 1.5 | Same prompt, both temperatures, observe coherence vs creativity tradeoff |
+| Few-shot prompting | Give 3 input/output examples, then a 4th input — see if the model continues the pattern |
+| Effect of weight tying | Set `lm_head.weight = nn.Parameter(...)` (separate weights) — model uses ~30% more params |
+| Profile generation speed | Time `model.generate(..., max_new_tokens=200)` with `use_cache=True` vs `False` — KV cache wins |
+| Look inside the attention | Hook into a block's attention to extract the attention matrix; visualize the lower-triangular structure |
+| Inject a system prompt | Prepend `"You are a helpful assistant. "` to your input — observe behavior shift (only works on RLHF'd models) |
+
 ## CLM training: the shifting trick
 
 The most important implementation detail in CLM training: **shift the targets by 1**.
@@ -350,6 +376,15 @@ In code: `input = token_ids[:, :-1]`, `target = token_ids[:, 1:]`. The model see
 | Semantic search | ✓ Good embeddings | ✓ With embedding extraction |
 | Code generation | ✗ | ✓ |
 | Reasoning chains | ✗ | ✓ Chain-of-thought prompting |
+
+## Cross-references
+
+- **Prerequisite:** [81 — Masked Self-Attention](./81-masked-self-attention-in-the-transformer-decoder.md) — the causal mask GPT depends on
+- **Prerequisite:** [83 — Decoder Architecture](./83-transformer-decoder-architecture.md) — the 2-sublayer decoder block (no cross-attention)
+- **Prerequisite:** [84 — Inference](./84-transformer-inference-step-by-step.md) — autoregressive generation + KV caching
+- **Prerequisite:** [85 — Training Objectives](./85-transformer-training-objectives.md) — CLM in detail
+- **Related:** [87 — BERT (Encoder-Only)](./87-bert-encoder-pretraining.md) — the contrasting "understand" model
+- **Follow-up:** [90 — Fine-Tuning](./90-fine-tuning-transformers.md) — adapting pretrained GPTs to specific tasks (LoRA, instruction-tuning)
 
 ## Interview questions
 

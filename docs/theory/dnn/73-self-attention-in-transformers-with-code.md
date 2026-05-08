@@ -10,7 +10,16 @@ tags: [self-attention, transformers, attention, pytorch, deep-learning]
 
 # Self-attention in transformers with code
 
+> **TL;DR.** Self-attention in code is five operations, no more: (1) project input X to Q, K, V via three learned matrices; (2) compute `Q @ K.T / sqrt(d_k)`; (3) softmax row-wise; (4) multiply by V; (5) the output has the same shape as X but each row is now a context-aware blend. This note traces every shape and every operation with concrete numbers — once you've run it once on small inputs, transformers feel mechanical.
+
 Self-attention is best understood by tracing a real example through the computation step by step: what enters, what the matrices look like, and what the output means. This note walks through single-head self-attention completely — from token embeddings to context vectors — with exact shapes at every step.
+
+## Try it interactively
+
+- **[Transformer Explainer](https://poloclub.github.io/transformer-explainer/)** — watch every shape transform in a real GPT-2 forward pass
+- **[Karpathy — nanoGPT walkthrough](https://www.youtube.com/watch?v=kCc8FmEb1nY)** — line-by-line implementation of self-attention
+- **[Hugging Face attention docs](https://huggingface.co/docs/transformers/attention)** — official API for attention modules in production transformers
+- **[PyTorch nn.MultiheadAttention](https://pytorch.org/docs/stable/generated/torch.nn.MultiheadAttention.html)** — the production implementation that wraps everything in this note
 
 ## One-line definition
 

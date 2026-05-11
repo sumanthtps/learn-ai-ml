@@ -10,7 +10,18 @@ tags: [in-context-learning, prompting, few-shot, chain-of-thought, llm, deep-lea
 
 # In-context learning and prompting
 
+> **TL;DR.** **In-context learning (ICL)** is the surprising fact that a frozen LLM can perform a new task just by *reading examples in its prompt* — no gradient updates, no fine-tuning. "Zero-shot": task description only. "Few-shot": include 2–10 input/output pairs before your query. "Chain-of-thought (CoT)": prompt the model to *show its reasoning*. ICL is the runtime API of the modern LLM economy — every ChatGPT, Claude, or Gemini interaction is just a clever prompt to a fixed model.
+
 GPT-3 introduced a surprising capability: by putting a few examples of a task in the prompt, the model could perform that task on new inputs — without any gradient updates. This ability, called in-context learning (ICL), is the foundation of modern LLM APIs. Understanding ICL, its mechanisms, and how to engineer effective prompts is essential for applied LLM work.
+
+## Try it interactively
+
+- **[OpenAI Playground](https://platform.openai.com/playground)** — write your own zero-shot / few-shot / CoT prompts against GPT-3.5/4
+- **[Claude Console](https://console.anthropic.com/)** — same idea, Claude family
+- **[Prompt Engineering Guide](https://www.promptingguide.ai/)** — encyclopedia of prompting techniques with runnable examples
+- **[Anthropic Prompt Library](https://docs.anthropic.com/en/prompt-library/library)** — curated prompts with explanations
+- **[LMSYS Chatbot Arena](https://chat.lmsys.org/)** — pit different prompts/models against each other side-by-side
+- **[OpenAI Cookbook](https://github.com/openai/openai-cookbook)** — production-grade prompting patterns
 
 ## One-line definition
 

@@ -10,7 +10,17 @@ tags: [flashattention, efficient-attention, long-context, transformers, deep-lea
 
 # FlashAttention and efficient transformers
 
+> **TL;DR.** Standard attention is **memory-bound**, not compute-bound — the N×N attention matrix shuttles back and forth between fast SRAM and slow HBM, and that I/O cost dominates. **FlashAttention** computes the *same exact output*, but tiled: it loads small blocks of Q/K/V into SRAM, runs softmax + matmul without ever writing the N×N matrix to HBM, and uses a clever "online softmax" trick to merge results. Memory drops from O(N²) to O(N); wall-clock speed jumps 2–4×; long-context training becomes feasible. It's now the default in every production transformer (PyTorch's `F.scaled_dot_product_attention`, vLLM, all modern LLM training stacks).
+
 Standard scaled dot-product attention materializes an $n \times n$ attention matrix in GPU memory, where $n$ is the sequence length. For $n=4096$: ~64 MB per head per batch item. For $n=32768$: ~4 GB. This memory cost makes long-context transformers prohibitively expensive. FlashAttention solves this by reordering the attention computation to never materialize the full attention matrix, reducing memory from $O(n^2)$ to $O(n)$ without changing the mathematical output.
+
+## Try it interactively
+
+- **[FlashAttention GitHub](https://github.com/Dao-AILab/flash-attention)** — the official Triton/CUDA implementation; one-liner replacement for nn.functional.scaled_dot_product_attention
+- **[PyTorch SDPA docs](https://pytorch.org/docs/stable/generated/torch.nn.functional.scaled_dot_product_attention.html)** — PyTorch 2+ automatically uses FlashAttention 2 when conditions allow
+- **[Tri Dao — FlashAttention talk (YouTube)](https://www.youtube.com/results?search_query=tri+dao+flashattention)** — author's own explanation with diagrams
+- **[Horace He — Making Deep Learning Go Brrrr](https://horace.io/brrr_intro.html)** — the canonical explanation of memory-bound vs compute-bound that motivates FlashAttention
+- **[vLLM](https://github.com/vllm-project/vllm)** — production LLM serving framework built on FlashAttention + PagedAttention
 
 ## One-line definition
 

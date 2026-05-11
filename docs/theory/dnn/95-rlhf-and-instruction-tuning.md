@@ -10,7 +10,18 @@ tags: [rlhf, instruction-tuning, reward-model, ppo, alignment, llm, deep-learnin
 
 # RLHF and instruction tuning
 
+> **TL;DR.** A base LLM predicts tokens — it doesn't follow instructions, refuse harmful requests, or stay polite. **RLHF** closes that gap in three stages: (1) **SFT** — supervised fine-tune on `(instruction, ideal response)` pairs; (2) **Reward modeling** — train a small model that scores responses based on human preference comparisons; (3) **PPO** — use reinforcement learning to push the LLM toward outputs the reward model rates highly. The same model that produced text completions now produces ChatGPT-quality conversations. Modern alternatives like **DPO** skip the reward model entirely.
+
 A pre-trained language model is trained to predict the next token on web text. This produces a model that completes text — but not one that follows instructions, avoids harmful outputs, or gives coherent multi-turn responses. The gap between "predicts tokens" and "helpful AI assistant" is closed by **instruction tuning** (supervised fine-tuning on human-written examples) and **Reinforcement Learning from Human Feedback (RLHF)** (learning from human preference comparisons). Together, these produced ChatGPT, Claude, and Gemini.
+
+## Try it interactively
+
+- **[Compare base vs RLHF'd model](https://replicate.com/explore)** — try `llama-2-7b` (base) and `llama-2-7b-chat` (RLHF'd) on the same prompt; the difference is dramatic
+- **[Hugging Face TRL library](https://github.com/huggingface/trl)** — production library for SFT, DPO, PPO, and GRPO
+- **[OpenAI Fine-tuning API](https://platform.openai.com/docs/guides/fine-tuning)** — supervised fine-tune GPT-3.5/4 on your own instruction data
+- **[Anthropic Constitutional AI paper](https://arxiv.org/abs/2212.08073)** — the RLAIF variant Claude uses (model-generated feedback instead of human)
+- **[InstructGPT paper](https://arxiv.org/abs/2203.02155)** — the original three-stage pipeline, with examples
+- **[OpenAssistant Conversations dataset](https://huggingface.co/datasets/OpenAssistant/oasst1)** — open-source instruction-following dataset to try SFT on
 
 ## One-line definition
 

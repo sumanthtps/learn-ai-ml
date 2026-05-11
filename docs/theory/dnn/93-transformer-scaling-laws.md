@@ -10,7 +10,17 @@ tags: [scaling-laws, chinchilla, llm, pre-training, transformers, deep-learning]
 
 # Transformer scaling laws
 
+> **TL;DR.** Scaling laws are **power-law relationships** between training loss and three knobs: parameters N, tokens D, and compute C. Kaplan et al. (OpenAI, 2020) said "make models bigger". Chinchilla (DeepMind, 2022) corrected it: for a fixed compute budget, **N and D should grow together** — train smaller models on more tokens. The "Chinchilla-optimal" rule of thumb: D ≈ 20 × N (20 tokens per parameter). This single insight is why LLaMA 7B trained on 1T+ tokens beats GPT-3 175B at many tasks despite being 25× smaller.
+
 Scaling laws are empirical equations that predict how a language model's loss changes as a function of model size, training data size, and compute budget. They are the reason the LLM field moved from 100M to 100B+ parameter models in five years — because the laws predicted it would work before anyone built the models.
+
+## Try it interactively
+
+- **[Epoch AI — Compute trends](https://epochai.org/data/notable-ai-models)** — explore frontier model training compute over time, plotted against scaling-law predictions
+- **[Chinchilla paper Colab](https://github.com/google-deepmind/chinchilla)** — re-derive the optimal N/D split for any compute budget
+- **[Hoffmann et al. interactive viewer](https://arxiv.org/abs/2203.15556)** — the Chinchilla paper itself, with all loss curves
+- **[Compute-optimal calculator](https://www.lesswrong.com/posts/midXmMb2Xg37F2Kgn/new-scaling-laws-for-large-language-models)** — given budget, compute optimal N and D
+- **[Notable LLMs leaderboard](https://lmsys.org/blog/2024-08-13-empirical-scaling-laws/)** — frontier scaling research, updated regularly
 
 ## One-line definition
 

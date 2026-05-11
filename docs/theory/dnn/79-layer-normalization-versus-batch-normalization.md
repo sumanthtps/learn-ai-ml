@@ -255,7 +255,7 @@ RMSNorm removes the mean subtraction, keeping only the RMS (root mean square) no
 
 ## Cross-references
 
-- **Prerequisite:** [31 — Batch Normalization](./31-batch-normalization.md) — the original normalization technique LayerNorm replaces in transformers
+- **Prerequisite:** [31 — Batch Normalization](./31-batch-normalization-in-deep-learning.md) — the original normalization technique LayerNorm replaces in transformers
 - **Follow-up:** [80 — Transformer Encoder Architecture](./80-transformer-encoder-architecture.md) — where LayerNorm sits in each block (pre-norm vs post-norm)
 - **Follow-up:** [83 — Transformer Decoder Architecture](./83-transformer-decoder-architecture.md) — the same Add & Norm pattern in the decoder
 - **Related:** Modern LLMs (LLaMA, Mistral, Gemma) use **RMSNorm** — see the section above for the simplified variant

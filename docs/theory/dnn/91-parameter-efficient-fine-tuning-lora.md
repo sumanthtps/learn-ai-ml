@@ -10,7 +10,17 @@ tags: [lora, peft, adapters, prefix-tuning, fine-tuning, llm, transformers, deep
 
 # Parameter-efficient fine-tuning: LoRA, adapters, and prefix tuning
 
+> **TL;DR.** Full fine-tuning a 7B-param model needs ~80 GB of GPU memory and saves 7 B parameters per task. **LoRA** is the trick that changed this: freeze the original weights, add a tiny pair of low-rank matrices `B·A` (rank 8–64) alongside each attention projection, train *only* those. You get ~99% of the quality with **less than 1% of the parameters** to train and store — a 7B model's LoRA adapter is often under 50 MB. This is how every modern fine-tune of LLaMA / Mistral / etc. is done in practice.
+
 Full fine-tuning a 7B-parameter LLM requires updating 7 billion parameters and storing 7B gradients — consuming ~80 GB of GPU memory for a single fine-tuning run. Parameter-efficient fine-tuning (PEFT) methods achieve comparable task performance while updating only 0.1–1% of parameters. LoRA is the most widely used PEFT method today: it is the standard approach for instruction tuning, domain adaptation, and task-specific customization of large language models.
+
+## Try it interactively
+
+- **[Hugging Face PEFT library](https://github.com/huggingface/peft)** — official LoRA implementation; wraps any model with one config object
+- **[Unsloth](https://github.com/unslothai/unsloth)** — 2× faster QLoRA fine-tuning on consumer GPUs (free Colab notebooks)
+- **[Axolotl](https://github.com/OpenAccess-AI-Collective/axolotl)** — config-driven LoRA / QLoRA for LLaMA-class models
+- **[QLoRA paper repo](https://github.com/artidoro/qlora)** — fine-tune a 65B model on a single 48GB GPU
+- **[LoRA Land (Predibase)](https://huggingface.co/predibase)** — 25+ specialized LoRA adapters for LLaMA, free to try
 
 ## One-line definition
 
